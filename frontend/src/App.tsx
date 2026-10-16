@@ -126,8 +126,14 @@ export const AppContent: React.FC = () => {
   // Template loader (1-click corporate workflow pipelines)
   const loadTemplateById = useCallback(
     (templateId: string) => {
-      const template = templates.find((t) => t.id === templateId) || WORKFLOW_TEMPLATES_DATA.find((t) => t.id === templateId);
-      if (!template || !template.layout_data) return;
+      const template =
+        templates.find((t) => t.id === templateId && t.layout_data && t.layout_data.nodes?.length > 0) ||
+        WORKFLOW_TEMPLATES_DATA.find((t) => t.id === templateId);
+
+      if (!template || !template.layout_data) {
+        console.warn(`Template with id '${templateId}' not found or missing layout_data.`);
+        return;
+      }
 
       setWorkflowName(template.name);
       setWorkflowId(`wf_${templateId}_${Date.now()}`);
@@ -155,9 +161,16 @@ export const AppContent: React.FC = () => {
       setEdges(newEdges);
       setSelectedNodeId(newNodes[0]?.id || null);
 
+      console.log('[loadTemplateById] Success, loaded template:', template.name, 'nodes count:', newNodes.length);
       addTerminalLog('SYSTEM', 'system', `Loaded corporate template: '${template.name}' (${newNodes.length} agents)`);
+
+      if ((window as any).__fitView) {
+        setTimeout(() => {
+          (window as any).__fitView();
+        }, 150);
+      }
     },
-    [templates, setNodes, setEdges]
+    [templates, setNodes, setEdges, addTerminalLog]
   );
 
   const initRanRef = useRef(false);
@@ -337,36 +350,75 @@ export const AppContent: React.FC = () => {
   const handleAddAgentPreset = useCallback(
     (preset: AgentPreset, position?: { x: number; y: number }) => {
       const id = `node_${preset.id}_${Math.random().toString(36).substring(2, 6)}`;
-      const nodePos = position || {
-        x: 150 + Math.random() * 200,
-        y: 150 + Math.random() * 200,
-      };
+      let nodePos = position;
+      if (!nodePos) {
+        setNodes((nds) => {
+          if (nds.length === 0) {
+            nodePos = { x: 200, y: 220 };
+          } else {
+            const maxX = Math.max(...nds.map((n) => n.position.x));
+            const maxY = Math.max(...nds.map((n) => n.position.y));
+            if (maxX < 1200) {
+              nodePos = { x: maxX + 280, y: 220 };
+            } else {
+              nodePos = { x: 100, y: maxY + 200 };
+            }
+          }
 
-      const newNode: Node = {
-        id,
-        type: 'agentNode',
-        position: nodePos,
-        data: {
+          const newNode: Node = {
+            id,
+            type: 'agentNode',
+            position: nodePos,
+            data: {
+              id,
+              preset_id: preset.id,
+              role_name: preset.role_name,
+              icon: preset.icon,
+              color_theme: preset.color_theme,
+              system_prompt: preset.default_system_prompt,
+              task_prompt: `Execute corporate objectives for ${preset.role_name}`,
+              allowed_paths: [...preset.default_allowed_paths],
+              read_only_paths: [...preset.default_read_only_paths],
+              require_human_approval: false,
+              simulate_violation: false,
+              status: 'idle',
+            } as AgentNodeData,
+          };
+          return [...nds, newNode];
+        });
+      } else {
+        const newNode: Node = {
           id,
-          preset_id: preset.id,
-          role_name: preset.role_name,
-          icon: preset.icon,
-          color_theme: preset.color_theme,
-          system_prompt: preset.default_system_prompt,
-          task_prompt: `Execute corporate objectives for ${preset.role_name}`,
-          allowed_paths: [...preset.default_allowed_paths],
-          read_only_paths: [...preset.default_read_only_paths],
-          require_human_approval: false,
-          simulate_violation: false,
-          status: 'idle',
-        } as AgentNodeData,
-      };
+          type: 'agentNode',
+          position: nodePos,
+          data: {
+            id,
+            preset_id: preset.id,
+            role_name: preset.role_name,
+            icon: preset.icon,
+            color_theme: preset.color_theme,
+            system_prompt: preset.default_system_prompt,
+            task_prompt: `Execute corporate objectives for ${preset.role_name}`,
+            allowed_paths: [...preset.default_allowed_paths],
+            read_only_paths: [...preset.default_read_only_paths],
+            require_human_approval: false,
+            simulate_violation: false,
+            status: 'idle',
+          } as AgentNodeData,
+        };
+        setNodes((nds) => [...nds, newNode]);
+      }
 
-      setNodes((nds) => [...nds, newNode]);
       setSelectedNodeId(id);
       addTerminalLog('SYSTEM', 'system', `Added agent '${preset.role_name}' to canvas`);
+
+      if ((window as any).__fitView) {
+        setTimeout(() => {
+          (window as any).__fitView();
+        }, 150);
+      }
     },
-    [setNodes]
+    [setNodes, addTerminalLog]
   );
 
   // Connect edges

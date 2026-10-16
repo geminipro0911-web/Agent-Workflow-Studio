@@ -52,7 +52,16 @@ export const api = {
   async getTemplates(): Promise<WorkflowTemplate[]> {
     try {
       const data = await request<WorkflowTemplate[]>('/templates');
-      return data && data.length > 0 ? data : WORKFLOW_TEMPLATES_DATA;
+      if (data && data.length > 0) {
+        return data.map((t) => {
+          if (!t.layout_data || !t.layout_data.nodes?.length) {
+            const fallback = WORKFLOW_TEMPLATES_DATA.find((f) => f.id === t.id);
+            return fallback ? { ...t, layout_data: fallback.layout_data } : t;
+          }
+          return t;
+        });
+      }
+      return WORKFLOW_TEMPLATES_DATA;
     } catch (e) {
       console.warn('API getTemplates failed, using built-in templates:', e);
       return WORKFLOW_TEMPLATES_DATA;

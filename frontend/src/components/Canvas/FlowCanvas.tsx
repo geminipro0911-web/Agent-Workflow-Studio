@@ -190,9 +190,17 @@ export const FlowCanvas: React.FC<FlowCanvasProps> = ({
               <button
                 type="button"
                 onClick={() => onLoadTemplate('fast_feature')}
-                className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200 border border-gray-300 dark:border-gray-700 transition"
+                className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200 border border-gray-300 dark:border-gray-700 transition transform active:scale-95"
               >
                 <span>Load Fast Feature Pipeline (4 Agents)</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => onLoadTemplate('bug_hotfix')}
+                className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200 border border-gray-300 dark:border-gray-700 transition transform active:scale-95"
+              >
+                <span>Load Bug Hotfix Pipeline (3 Agents)</span>
               </button>
             </div>
           </div>

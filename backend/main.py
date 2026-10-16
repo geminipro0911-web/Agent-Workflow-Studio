@@ -182,19 +182,23 @@ def get_presets():
 
 
 @app.get("/api/v1/templates", tags=["Templates"])
+@app.get("/api/templates", tags=["Templates"])
 def get_templates():
-    """Retrieve the 3 built-in workflow templates."""
-    summary_list = [
-        {
-            "id": t["id"],
-            "name": t["name"],
-            "description": t["description"],
-            "nodes_count": t["nodes_count"],
-            "edges_count": t["edges_count"],
-        }
-        for t in WORKFLOW_TEMPLATES
-    ]
-    return {"success": True, "data": summary_list}
+    """Retrieve the 3 built-in workflow templates with full layout data."""
+    return {"success": True, "data": WORKFLOW_TEMPLATES}
+
+
+@app.get("/api/v1/templates/{template_id}", tags=["Templates"])
+@app.get("/api/templates/{template_id}", tags=["Templates"])
+def get_template_by_id(template_id: str):
+    """Retrieve a single built-in workflow template with layout data."""
+    template = TEMPLATE_MAP.get(template_id)
+    if not template:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Template with id '{template_id}' not found."
+        )
+    return {"success": True, "data": template}
 
 
 @app.post("/api/v1/workflows/from-template/{template_id}", status_code=status.HTTP_201_CREATED, tags=["Templates"])

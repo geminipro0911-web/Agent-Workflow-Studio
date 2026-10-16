@@ -257,6 +257,7 @@ export const Header: React.FC<HeaderProps> = ({
         {/* Reset Canvas */}
         <button
           type="button"
+          data-testid="reset-canvas-btn"
           onClick={onResetCanvas}
           className="p-2 rounded-xl bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 border border-gray-200 dark:border-gray-700 transition"
           title={t('clear_canvas')}
