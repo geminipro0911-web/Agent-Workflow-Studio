@@ -444,6 +444,312 @@ WORKFLOW_TEMPLATES: List[Dict[str, Any]] = [
                 {"id": "e_qa_sec", "source_node_id": "node_qa", "target_node_id": "node_sec", "condition": "success"}
             ]
         }
+    },
+    {
+        "id": "feature_update",
+        "name": "Feature Enhancement Pipeline",
+        "description": "Enterprise feature extension: PM -> Architect -> [Backend & Frontend] -> QA Regression",
+        "nodes_count": 5,
+        "edges_count": 5,
+        "layout_data": {
+            "nodes": [
+                {
+                    "id": "node_pm",
+                    "preset_id": "pm",
+                    "role_name": "Product Manager (BA)",
+                    "node_type": "pm",
+                    "color_theme": "#f59e0b",
+                    "icon": "Briefcase",
+                    "position_x": 80.0,
+                    "position_y": 200.0,
+                    "system_prompt": PRESET_MAP["pm"]["default_system_prompt"],
+                    "task_prompt": "Analyze feature update request, define acceptance criteria in docs/requirements/feature_spec.md.",
+                    "allowed_paths": PRESET_MAP["pm"]["default_allowed_paths"],
+                    "read_only_paths": PRESET_MAP["pm"]["default_read_only_paths"],
+                    "require_human_approval": False
+                },
+                {
+                    "id": "node_arch",
+                    "preset_id": "architect",
+                    "role_name": "System Architect",
+                    "node_type": "architect",
+                    "color_theme": "#8b5cf6",
+                    "icon": "Compass",
+                    "position_x": 360.0,
+                    "position_y": 200.0,
+                    "system_prompt": PRESET_MAP["architect"]["default_system_prompt"],
+                    "task_prompt": "Update API specification in api_spec.md and ensure backward compatibility in docs/architecture/.",
+                    "allowed_paths": PRESET_MAP["architect"]["default_allowed_paths"],
+                    "read_only_paths": PRESET_MAP["architect"]["default_read_only_paths"],
+                    "require_human_approval": False
+                },
+                {
+                    "id": "node_be",
+                    "preset_id": "backend",
+                    "role_name": "Backend Developer",
+                    "node_type": "backend",
+                    "color_theme": "#3b82f6",
+                    "icon": "Server",
+                    "position_x": 660.0,
+                    "position_y": 100.0,
+                    "system_prompt": PRESET_MAP["backend"]["default_system_prompt"],
+                    "task_prompt": "Implement backend feature logic and update routes in backend/app/.",
+                    "allowed_paths": PRESET_MAP["backend"]["default_allowed_paths"],
+                    "read_only_paths": PRESET_MAP["backend"]["default_read_only_paths"],
+                    "require_human_approval": False
+                },
+                {
+                    "id": "node_fe",
+                    "preset_id": "frontend",
+                    "role_name": "Frontend Developer",
+                    "node_type": "frontend",
+                    "color_theme": "#06b6d4",
+                    "icon": "Layout",
+                    "position_x": 660.0,
+                    "position_y": 300.0,
+                    "system_prompt": PRESET_MAP["frontend"]["default_system_prompt"],
+                    "task_prompt": "Implement UI components and state updates in frontend/src/.",
+                    "allowed_paths": PRESET_MAP["frontend"]["default_allowed_paths"],
+                    "read_only_paths": PRESET_MAP["frontend"]["default_read_only_paths"],
+                    "require_human_approval": False
+                },
+                {
+                    "id": "node_qa",
+                    "preset_id": "qa",
+                    "role_name": "QA & Automation Tester",
+                    "node_type": "qa",
+                    "color_theme": "#22c55e",
+                    "icon": "CheckSquare",
+                    "position_x": 960.0,
+                    "position_y": 200.0,
+                    "system_prompt": PRESET_MAP["qa"]["default_system_prompt"],
+                    "task_prompt": "Execute regression test suite on modified features and log results in docs/test_reports/.",
+                    "allowed_paths": PRESET_MAP["qa"]["default_allowed_paths"],
+                    "read_only_paths": PRESET_MAP["qa"]["default_read_only_paths"],
+                    "require_human_approval": False
+                }
+            ],
+            "edges": [
+                {"id": "e_pm_arch", "source_node_id": "node_pm", "target_node_id": "node_arch", "condition": "success"},
+                {"id": "e_arch_be", "source_node_id": "node_arch", "target_node_id": "node_be", "condition": "success"},
+                {"id": "e_arch_fe", "source_node_id": "node_arch", "target_node_id": "node_fe", "condition": "success"},
+                {"id": "e_be_qa", "source_node_id": "node_be", "target_node_id": "node_qa", "condition": "success"},
+                {"id": "e_fe_qa", "source_node_id": "node_fe", "target_node_id": "node_qa", "condition": "success"}
+            ]
+        }
+    },
+    {
+        "id": "security_audit",
+        "name": "Security & Compliance Audit",
+        "description": "Deep security inspection: [Security Reviewer & QA Fuzzer] -> System Architect Remediation",
+        "nodes_count": 3,
+        "edges_count": 2,
+        "layout_data": {
+            "nodes": [
+                {
+                    "id": "node_sec",
+                    "preset_id": "security",
+                    "role_name": "Security / Code Reviewer",
+                    "node_type": "security",
+                    "color_theme": "#f43f5e",
+                    "icon": "ShieldAlert",
+                    "position_x": 100.0,
+                    "position_y": 100.0,
+                    "system_prompt": PRESET_MAP["security"]["default_system_prompt"],
+                    "task_prompt": "Audit codebase for OWASP Top 10 vulnerabilities and output report in docs/security_audit/.",
+                    "allowed_paths": PRESET_MAP["security"]["default_allowed_paths"],
+                    "read_only_paths": PRESET_MAP["security"]["default_read_only_paths"],
+                    "require_human_approval": False
+                },
+                {
+                    "id": "node_qa",
+                    "preset_id": "qa",
+                    "role_name": "QA & Automation Tester",
+                    "node_type": "qa",
+                    "color_theme": "#22c55e",
+                    "icon": "CheckSquare",
+                    "position_x": 100.0,
+                    "position_y": 300.0,
+                    "system_prompt": PRESET_MAP["qa"]["default_system_prompt"],
+                    "task_prompt": "Run security fuzzing, edge injection tests, and auth validation in tests/.",
+                    "allowed_paths": PRESET_MAP["qa"]["default_allowed_paths"],
+                    "read_only_paths": PRESET_MAP["qa"]["default_read_only_paths"],
+                    "require_human_approval": False
+                },
+                {
+                    "id": "node_arch",
+                    "preset_id": "architect",
+                    "role_name": "System Architect",
+                    "node_type": "architect",
+                    "color_theme": "#8b5cf6",
+                    "icon": "Compass",
+                    "position_x": 450.0,
+                    "position_y": 200.0,
+                    "system_prompt": PRESET_MAP["architect"]["default_system_prompt"],
+                    "task_prompt": "Synthesize security findings and draft remediation plan in docs/architecture/security_remediation.md.",
+                    "allowed_paths": PRESET_MAP["architect"]["default_allowed_paths"],
+                    "read_only_paths": PRESET_MAP["architect"]["default_read_only_paths"],
+                    "require_human_approval": False
+                }
+            ],
+            "edges": [
+                {"id": "e_sec_arch", "source_node_id": "node_sec", "target_node_id": "node_arch", "condition": "success"},
+                {"id": "e_qa_arch", "source_node_id": "node_qa", "target_node_id": "node_arch", "condition": "success"}
+            ]
+        }
+    },
+    {
+        "id": "code_review_refactor",
+        "name": "Code Review & Refactoring",
+        "description": "Tech debt reduction: Architect -> [Backend & Frontend Refactor] -> QA -> Security",
+        "nodes_count": 5,
+        "edges_count": 5,
+        "layout_data": {
+            "nodes": [
+                {
+                    "id": "node_arch",
+                    "preset_id": "architect",
+                    "role_name": "System Architect",
+                    "node_type": "architect",
+                    "color_theme": "#8b5cf6",
+                    "icon": "Compass",
+                    "position_x": 80.0,
+                    "position_y": 200.0,
+                    "system_prompt": PRESET_MAP["architect"]["default_system_prompt"],
+                    "task_prompt": "Analyze code smells and draft refactoring guidelines in docs/architecture/refactoring.md.",
+                    "allowed_paths": PRESET_MAP["architect"]["default_allowed_paths"],
+                    "read_only_paths": PRESET_MAP["architect"]["default_read_only_paths"],
+                    "require_human_approval": False
+                },
+                {
+                    "id": "node_be",
+                    "preset_id": "backend",
+                    "role_name": "Backend Developer",
+                    "node_type": "backend",
+                    "color_theme": "#3b82f6",
+                    "icon": "Server",
+                    "position_x": 380.0,
+                    "position_y": 100.0,
+                    "system_prompt": PRESET_MAP["backend"]["default_system_prompt"],
+                    "task_prompt": "Refactor backend modules for clean architecture and performance in backend/app/.",
+                    "allowed_paths": PRESET_MAP["backend"]["default_allowed_paths"],
+                    "read_only_paths": PRESET_MAP["backend"]["default_read_only_paths"],
+                    "require_human_approval": False
+                },
+                {
+                    "id": "node_fe",
+                    "preset_id": "frontend",
+                    "role_name": "Frontend Developer",
+                    "node_type": "frontend",
+                    "color_theme": "#06b6d4",
+                    "icon": "Layout",
+                    "position_x": 380.0,
+                    "position_y": 300.0,
+                    "system_prompt": PRESET_MAP["frontend"]["default_system_prompt"],
+                    "task_prompt": "Refactor React components, eliminate duplicate state, and optimize hooks in frontend/src/.",
+                    "allowed_paths": PRESET_MAP["frontend"]["default_allowed_paths"],
+                    "read_only_paths": PRESET_MAP["frontend"]["default_read_only_paths"],
+                    "require_human_approval": False
+                },
+                {
+                    "id": "node_qa",
+                    "preset_id": "qa",
+                    "role_name": "QA & Automation Tester",
+                    "node_type": "qa",
+                    "color_theme": "#22c55e",
+                    "icon": "CheckSquare",
+                    "position_x": 680.0,
+                    "position_y": 200.0,
+                    "system_prompt": PRESET_MAP["qa"]["default_system_prompt"],
+                    "task_prompt": "Run full regression test suite in tests/ to verify zero functional regression.",
+                    "allowed_paths": PRESET_MAP["qa"]["default_allowed_paths"],
+                    "read_only_paths": PRESET_MAP["qa"]["default_read_only_paths"],
+                    "require_human_approval": False
+                },
+                {
+                    "id": "node_sec",
+                    "preset_id": "security",
+                    "role_name": "Security / Code Reviewer",
+                    "node_type": "security",
+                    "color_theme": "#f43f5e",
+                    "icon": "ShieldAlert",
+                    "position_x": 980.0,
+                    "position_y": 200.0,
+                    "system_prompt": PRESET_MAP["security"]["default_system_prompt"],
+                    "task_prompt": "Audit refactored code paths to ensure security guarantees and access controls remain intact.",
+                    "allowed_paths": PRESET_MAP["security"]["default_allowed_paths"],
+                    "read_only_paths": PRESET_MAP["security"]["default_read_only_paths"],
+                    "require_human_approval": False
+                }
+            ],
+            "edges": [
+                {"id": "e_arch_be", "source_node_id": "node_arch", "target_node_id": "node_be", "condition": "success"},
+                {"id": "e_arch_fe", "source_node_id": "node_arch", "target_node_id": "node_fe", "condition": "success"},
+                {"id": "e_be_qa", "source_node_id": "node_be", "target_node_id": "node_qa", "condition": "success"},
+                {"id": "e_fe_qa", "source_node_id": "node_fe", "target_node_id": "node_qa", "condition": "success"},
+                {"id": "e_qa_sec", "source_node_id": "node_qa", "target_node_id": "node_sec", "condition": "success"}
+            ]
+        }
+    },
+    {
+        "id": "db_migration_audit",
+        "name": "Database Migration & Audit",
+        "description": "Safe database migration: Database Engineer -> Backend Developer -> Security Auditor",
+        "nodes_count": 3,
+        "edges_count": 2,
+        "layout_data": {
+            "nodes": [
+                {
+                    "id": "node_db",
+                    "preset_id": "database",
+                    "role_name": "Database Engineer",
+                    "node_type": "database",
+                    "color_theme": "#10b981",
+                    "icon": "Database",
+                    "position_x": 100.0,
+                    "position_y": 200.0,
+                    "system_prompt": PRESET_MAP["database"]["default_system_prompt"],
+                    "task_prompt": "Design schema change, write safe migrations and rollback scripts under backend/migrations/.",
+                    "allowed_paths": PRESET_MAP["database"]["default_allowed_paths"],
+                    "read_only_paths": PRESET_MAP["database"]["default_read_only_paths"],
+                    "require_human_approval": False
+                },
+                {
+                    "id": "node_be",
+                    "preset_id": "backend",
+                    "role_name": "Backend Developer",
+                    "node_type": "backend",
+                    "color_theme": "#3b82f6",
+                    "icon": "Server",
+                    "position_x": 420.0,
+                    "position_y": 200.0,
+                    "system_prompt": PRESET_MAP["backend"]["default_system_prompt"],
+                    "task_prompt": "Update ORM models and database repositories in backend/app/ to match new schema.",
+                    "allowed_paths": PRESET_MAP["backend"]["default_allowed_paths"],
+                    "read_only_paths": PRESET_MAP["backend"]["default_read_only_paths"],
+                    "require_human_approval": False
+                },
+                {
+                    "id": "node_sec",
+                    "preset_id": "security",
+                    "role_name": "Security / Code Reviewer",
+                    "node_type": "security",
+                    "color_theme": "#f43f5e",
+                    "icon": "ShieldAlert",
+                    "position_x": 740.0,
+                    "position_y": 200.0,
+                    "system_prompt": PRESET_MAP["security"]["default_system_prompt"],
+                    "task_prompt": "Audit migrations for SQL injection risks, privilege escalation, and sensitive data leakage.",
+                    "allowed_paths": PRESET_MAP["security"]["default_allowed_paths"],
+                    "read_only_paths": PRESET_MAP["security"]["default_read_only_paths"],
+                    "require_human_approval": False
+                }
+            ],
+            "edges": [
+                {"id": "e_db_be", "source_node_id": "node_db", "target_node_id": "node_be", "condition": "success"},
+                {"id": "e_be_sec", "source_node_id": "node_be", "target_node_id": "node_sec", "condition": "success"}
+            ]
+        }
     }
 ]
 

@@ -121,11 +121,19 @@ Bảng điều khiển trực quan cập nhật tiến độ, thời gian chạy
 
 ---
 
-## 📋 3 Workflow Templates Sẵn Sàng
+## 📋 7 Workflow Templates Sẵn Sàng (1-Click Enterprise Pipelines)
 
-1. **Full-Stack SDLC Pipeline:** Chu trình phát triển phần mềm toàn diện với đầy đủ 7 vai trò từ ý tưởng PRD đến kiểm toán an ninh.
-2. **Fast Feature Pipeline:** Quy trình phát triển tính năng siêu tốc (PM -> Backend Dev -> Frontend Dev -> QA Tester).
-3. **Bug Hotfix Pipeline:** Quy trình phản ứng nhanh xử lý lỗi khẩn cấp (QA Tester tái hiện lỗi -> Backend Dev sửa chữa -> Security Reviewer xác thực).
+Hệ thống được đóng gói sẵn **7 quy trình mẫu chuẩn** cho các tác vụ kỹ thuật phần mềm phổ biến trong doanh nghiệp:
+
+| STT | Workflow Template | Số Node | Sơ Đồ DAG & Luồng Phối Hợp | Ứng Dụng Thực Tế |
+|:---:|:---|:---:|:---|:---|
+| 1 | **Full-Stack SDLC Pipeline** | 7 | PM ➔ Architect ➔ Database ➔ [Backend & Frontend song song] ➔ QA ➔ Security | Chu trình phát triển phần mềm toàn diện từ ý tưởng PRD đến kiểm toán an ninh xuất xưởng |
+| 2 | **Fast Feature Pipeline** | 4 | Architect ➔ [Backend & Frontend song song] ➔ QA Tester | Triển khai nhanh tính năng mới đã có sẵn kiến trúc và schema |
+| 3 | **Feature Enhancement Pipeline** | 5 | PM ➔ Architect ➔ [Backend & Frontend song song] ➔ QA Regression | Nâng cấp / bổ sung chức năng mới cho hệ thống hiện tại và kiểm thử hồi quy |
+| 4 | **Security & Compliance Audit** | 3 | [Security Reviewer & QA Fuzzer song song] ➔ Architect Remediation | Rà soát lỗ hổng OWASP, kiểm thử bảo mật API / Fuzzing và lập kế hoạch khắc phục |
+| 5 | **Code Review & Refactoring** | 5 | Architect ➔ [Backend & Frontend Refactor] ➔ QA ➔ Security | Tái cấu trúc mã nguồn, xử lý nợ kỹ thuật (Tech Debt) và tối ưu hóa hiệu năng |
+| 6 | **Database Migration & Audit** | 3 | Database Engineer ➔ Backend Developer ➔ Security Reviewer | Nâng cấp CSDL an toàn, đồng bộ ORM models và kiểm định phòng chống rò rỉ dữ liệu / SQLi |
+| 7 | **Bug Hotfix Pipeline** | 3 | Backend Developer ➔ QA Tester ➔ Security Reviewer | Phản ứng nhanh khắc phục sự cố khẩn cấp, kiểm thử hồi quy và chứng nhận an toàn |
 
 ---
 

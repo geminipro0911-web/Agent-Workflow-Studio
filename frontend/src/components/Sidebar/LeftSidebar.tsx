@@ -7,6 +7,11 @@ import {
   Zap,
   ChevronDown,
   ChevronRight,
+  ShieldAlert,
+  Wrench,
+  RefreshCw,
+  Database,
+  Flame,
 } from 'lucide-react';
 import { AgentPreset, WorkflowTemplate } from '../../types';
 import { IconMapper } from '../Common/IconMapper';
@@ -18,6 +23,91 @@ interface LeftSidebarProps {
   onSelectTemplate: (templateId: string) => void;
   onAddAgentPreset: (preset: AgentPreset) => void;
 }
+
+const getTemplateMeta = (id: string) => {
+  switch (id) {
+    case 'fullstack_sdlc':
+      return {
+        icon: <Zap className="w-4 h-4" />,
+        badge: 'SDLC',
+        badgeColor: 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-300 border-blue-200 dark:border-blue-500/30',
+        iconBg: 'bg-blue-600 text-white',
+        border: 'border-blue-300 dark:border-blue-500/50 shadow-md dark:shadow-lg dark:shadow-blue-900/30',
+        bg: 'bg-blue-50/70 dark:bg-gradient-to-b dark:from-[#182238] dark:to-[#121A2C]',
+        btnPrimary: true,
+      };
+    case 'fast_feature':
+      return {
+        icon: <Zap className="w-4 h-4" />,
+        badge: 'Feature',
+        badgeColor: 'bg-purple-100 text-purple-700 dark:bg-purple-500/20 dark:text-purple-300 border-purple-200 dark:border-purple-500/30',
+        iconBg: 'bg-purple-600 text-white',
+        border: 'border-gray-200 dark:border-gray-800 hover:border-purple-400',
+        bg: 'bg-gray-50 dark:bg-[#131B2A]',
+        btnPrimary: false,
+      };
+    case 'bug_hotfix':
+      return {
+        icon: <Flame className="w-4 h-4" />,
+        badge: 'Hotfix',
+        badgeColor: 'bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-300 border-rose-200 dark:border-rose-500/30',
+        iconBg: 'bg-rose-600 text-white',
+        border: 'border-gray-200 dark:border-gray-800 hover:border-rose-400',
+        bg: 'bg-gray-50 dark:bg-[#131B2A]',
+        btnPrimary: false,
+      };
+    case 'feature_update':
+      return {
+        icon: <RefreshCw className="w-4 h-4" />,
+        badge: 'Feature Update',
+        badgeColor: 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300 border-amber-200 dark:border-amber-500/30',
+        iconBg: 'bg-amber-600 text-white',
+        border: 'border-gray-200 dark:border-gray-800 hover:border-amber-400',
+        bg: 'bg-gray-50 dark:bg-[#131B2A]',
+        btnPrimary: false,
+      };
+    case 'security_audit':
+      return {
+        icon: <ShieldAlert className="w-4 h-4" />,
+        badge: 'Security Audit',
+        badgeColor: 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-300 border-red-200 dark:border-red-500/30',
+        iconBg: 'bg-red-600 text-white',
+        border: 'border-gray-200 dark:border-gray-800 hover:border-red-400',
+        bg: 'bg-gray-50 dark:bg-[#131B2A]',
+        btnPrimary: false,
+      };
+    case 'code_review_refactor':
+      return {
+        icon: <Wrench className="w-4 h-4" />,
+        badge: 'Review & Refactor',
+        badgeColor: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-300 border-indigo-200 dark:border-indigo-500/30',
+        iconBg: 'bg-indigo-600 text-white',
+        border: 'border-gray-200 dark:border-gray-800 hover:border-indigo-400',
+        bg: 'bg-gray-50 dark:bg-[#131B2A]',
+        btnPrimary: false,
+      };
+    case 'db_migration_audit':
+      return {
+        icon: <Database className="w-4 h-4" />,
+        badge: 'DB Migration',
+        badgeColor: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300 border-emerald-200 dark:border-emerald-500/30',
+        iconBg: 'bg-emerald-600 text-white',
+        border: 'border-gray-200 dark:border-gray-800 hover:border-emerald-400',
+        bg: 'bg-gray-50 dark:bg-[#131B2A]',
+        btnPrimary: false,
+      };
+    default:
+      return {
+        icon: <Layers className="w-4 h-4" />,
+        badge: 'Pipeline',
+        badgeColor: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300 border-gray-200 dark:border-gray-700',
+        iconBg: 'bg-blue-600 text-white',
+        border: 'border-gray-200 dark:border-gray-800',
+        bg: 'bg-gray-50 dark:bg-[#131B2A]',
+        btnPrimary: false,
+      };
+  }
+};
 
 export const LeftSidebar: React.FC<LeftSidebarProps> = ({
   presets,
@@ -62,7 +152,7 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
             }`}
           >
             <Layers className="w-3.5 h-3.5" />
-            <span>{t('workflow_templates')}</span>
+            <span>{t('workflow_templates', { count: templates.length })}</span>
           </button>
         </div>
       </div>
@@ -181,7 +271,7 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
           </div>
         ) : (
           /* ======================================================== */
-          /* 3 WORKFLOW TEMPLATES (1-CLICK CREATION) */
+          /* 7 WORKFLOW TEMPLATES (1-CLICK CREATION) */
           /* ======================================================== */
           <div className="space-y-3">
             <div className="px-1 text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">
@@ -189,33 +279,27 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
             </div>
 
             {templates.map((tpl) => {
-              const isSDLC = tpl.id === 'fullstack_sdlc';
-              const isFast = tpl.id === 'fast_feature';
+              const meta = getTemplateMeta(tpl.id);
               return (
                 <div
                   key={tpl.id}
                   onClick={() => onSelectTemplate(tpl.id)}
-                  className={`p-3.5 rounded-xl border transition-all cursor-pointer hover:border-blue-500 hover:shadow-lg active:scale-[0.98] ${
-                    isSDLC
-                      ? 'bg-blue-50 dark:bg-gradient-to-b dark:from-[#182238] dark:to-[#121A2C] border-blue-300 dark:border-blue-500/50 shadow-md dark:shadow-lg dark:shadow-blue-900/30'
-                      : 'bg-gray-50 dark:bg-[#131B2A] border-gray-200 dark:border-gray-800 hover:border-gray-300 dark:hover:border-gray-700'
-                  }`}
+                  className={`p-3.5 rounded-xl border transition-all cursor-pointer hover:shadow-lg active:scale-[0.98] ${meta.bg} ${meta.border}`}
                 >
                   <div className="flex items-start justify-between gap-2">
-                    <div className="flex items-center gap-2">
-                      <div
-                        className={`p-2 rounded-lg ${
-                          isSDLC
-                            ? 'bg-blue-600 text-white'
-                            : isFast
-                            ? 'bg-purple-100 text-purple-700 dark:bg-purple-600/30 dark:text-purple-300 border border-purple-200 dark:border-purple-500/40'
-                            : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-600/30 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-500/40'
-                        }`}
-                      >
-                        {isSDLC ? <Zap className="w-4 h-4" /> : <Layers className="w-4 h-4" />}
+                    <div className="flex items-center gap-2.5">
+                      <div className={`p-2 rounded-lg ${meta.iconBg}`}>
+                        {meta.icon}
                       </div>
                       <div>
-                        <h4 className="font-bold text-xs text-gray-900 dark:text-white leading-tight">{tpl.name}</h4>
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <h4 className="font-bold text-xs text-gray-900 dark:text-white leading-tight">
+                            {tpl.name}
+                          </h4>
+                          <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-semibold border ${meta.badgeColor}`}>
+                            {meta.badge}
+                          </span>
+                        </div>
                         <div className="text-[10px] text-gray-500 dark:text-gray-400 font-mono mt-0.5">
                           {t('nodes_count', { nodes: tpl.nodes_count })} • {t('edges_count', { edges: tpl.edges_count })}
                         </div>
@@ -234,7 +318,7 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
                       onSelectTemplate(tpl.id);
                     }}
                     className={`mt-3 w-full flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-xs font-semibold transition transform active:scale-95 ${
-                      isSDLC
+                      meta.btnPrimary
                         ? 'bg-blue-600 hover:bg-blue-500 text-white shadow-md shadow-blue-600/30'
                         : 'bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200 border border-gray-300 dark:border-gray-700'
                     }`}
@@ -245,7 +329,6 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
               );
             })}
           </div>
-
         )}
       </div>
 

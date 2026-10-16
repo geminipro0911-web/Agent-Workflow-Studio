@@ -55,9 +55,17 @@ class TestPresets(unittest.TestCase):
             self.assertIsInstance(p["default_read_only_paths"], list)
             self.assertTrue(len(p["default_allowed_paths"]) > 0)
 
-    def test_three_workflow_templates(self):
-        self.assertEqual(len(WORKFLOW_TEMPLATES), 3)
-        expected_templates = {"fullstack_sdlc", "fast_feature", "bug_hotfix"}
+    def test_workflow_templates(self):
+        self.assertEqual(len(WORKFLOW_TEMPLATES), 7)
+        expected_templates = {
+            "fullstack_sdlc",
+            "fast_feature",
+            "bug_hotfix",
+            "feature_update",
+            "security_audit",
+            "code_review_refactor",
+            "db_migration_audit",
+        }
         actual_templates = {t["id"] for t in WORKFLOW_TEMPLATES}
         self.assertEqual(expected_templates, actual_templates)
 
@@ -72,6 +80,26 @@ class TestPresets(unittest.TestCase):
         fs = TEMPLATE_MAP["fullstack_sdlc"]
         self.assertEqual(fs["nodes_count"], 7)
         self.assertEqual(fs["edges_count"], 7)
+
+        # Check feature_update has 5 nodes and 5 edges
+        fu = TEMPLATE_MAP["feature_update"]
+        self.assertEqual(fu["nodes_count"], 5)
+        self.assertEqual(fu["edges_count"], 5)
+
+        # Check security_audit has 3 nodes and 2 edges
+        sa = TEMPLATE_MAP["security_audit"]
+        self.assertEqual(sa["nodes_count"], 3)
+        self.assertEqual(sa["edges_count"], 2)
+
+        # Check code_review_refactor has 5 nodes and 5 edges
+        cr = TEMPLATE_MAP["code_review_refactor"]
+        self.assertEqual(cr["nodes_count"], 5)
+        self.assertEqual(cr["edges_count"], 5)
+
+        # Check db_migration_audit has 3 nodes and 2 edges
+        dbm = TEMPLATE_MAP["db_migration_audit"]
+        self.assertEqual(dbm["nodes_count"], 3)
+        self.assertEqual(dbm["edges_count"], 2)
 
 
 class TestGitScopeAuditor(unittest.TestCase):
@@ -265,7 +293,7 @@ class TestFastAPIRoutes(unittest.TestCase):
         self.assertEqual(res.status_code, 200)
         data = res.json()
         self.assertTrue(data["success"])
-        self.assertEqual(len(data["data"]), 3)
+        self.assertEqual(len(data["data"]), 7)
 
     def test_workflow_lifecycle_from_template(self):
         # 1. Create workflow from template

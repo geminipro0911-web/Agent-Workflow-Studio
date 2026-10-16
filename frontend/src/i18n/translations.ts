@@ -24,7 +24,7 @@ export const translations = {
 
     // Sidebar - Tabs & Headers
     agent_library: 'Agent Library (7)',
-    workflow_templates: 'Templates (3)',
+    workflow_templates: 'Templates ({count})',
     standard_enterprise_roles: 'Standard Enterprise Roles',
     drag_to_canvas: 'Drag to Canvas',
     click_to_add: 'Add to canvas center',
@@ -133,7 +133,7 @@ export const translations = {
 
     // Sidebar - Tabs & Headers
     agent_library: 'Thư viện Agent (7)',
-    workflow_templates: 'Mẫu quy trình (3)',
+    workflow_templates: 'Mẫu quy trình ({count})',
     standard_enterprise_roles: 'Các vai trò chuẩn công ty',
     drag_to_canvas: 'Kéo thả vào Canvas',
     click_to_add: 'Thêm vào giữa bảng vẽ',
@@ -149,7 +149,7 @@ export const translations = {
     // Canvas & Node
     drag_drop_guide_title: 'Bảng vẽ trực quan Multi-Agent',
     drag_drop_guide_desc:
-      'Kéo và thả các mẫu Agent từ thanh thư viện bên trái, hoặc bấm chọn 1 trong 3 quy trình mẫu chuẩn bên dưới để khởi tạo sơ đồ phòng ban.',
+      'Kéo và thả các mẫu Agent từ thanh thư viện bên trái, hoặc bấm chọn các quy trình mẫu chuẩn bên dưới để khởi tạo sơ đồ phòng ban.',
     status_idle: 'Nghỉ',
     status_running: 'Đang chạy',
     status_completed: 'Hoàn thành',

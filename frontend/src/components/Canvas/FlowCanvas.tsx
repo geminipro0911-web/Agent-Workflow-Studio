@@ -16,7 +16,7 @@ import '@xyflow/react/dist/style.css';
 
 import { AgentNode } from './AgentNode';
 import { AgentPreset, ViolationData } from '../../types';
-import { Sparkles, Layers } from 'lucide-react';
+import { Sparkles, Layers, ShieldAlert, Wrench, RefreshCw, Database, Flame, Zap } from 'lucide-react';
 import { useThemeLanguage } from '../../context/ThemeLanguageContext';
 
 const nodeTypes = {
@@ -177,30 +177,89 @@ export const FlowCanvas: React.FC<FlowCanvasProps> = ({
               </p>
             </div>
 
-            <div className="pt-2 flex flex-col gap-2">
+            <div className="pt-2 flex flex-col gap-1.5 max-h-60 overflow-y-auto pr-1">
               <button
                 type="button"
                 onClick={() => onLoadTemplate('fullstack_sdlc')}
-                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white shadow-md shadow-blue-600/30 transition transform active:scale-95"
+                className="w-full flex items-center justify-between gap-2 px-3 py-2 rounded-xl text-xs font-semibold bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white shadow-md shadow-blue-600/30 transition transform active:scale-95"
               >
-                <Layers className="w-4 h-4" />
-                <span>Load Full-Stack SDLC Template (7 Agents)</span>
+                <div className="flex items-center gap-2">
+                  <Layers className="w-3.5 h-3.5" />
+                  <span>Full-Stack SDLC Pipeline</span>
+                </div>
+                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-white/20 font-mono">7 Agents</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => onLoadTemplate('feature_update')}
+                className="w-full flex items-center justify-between gap-2 px-3 py-1.5 rounded-xl text-xs font-semibold bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200 border border-gray-300 dark:border-gray-700 transition transform active:scale-95"
+              >
+                <div className="flex items-center gap-2">
+                  <RefreshCw className="w-3.5 h-3.5 text-amber-500" />
+                  <span>Feature Enhancement</span>
+                </div>
+                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300 font-mono">5 Agents</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => onLoadTemplate('code_review_refactor')}
+                className="w-full flex items-center justify-between gap-2 px-3 py-1.5 rounded-xl text-xs font-semibold bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200 border border-gray-300 dark:border-gray-700 transition transform active:scale-95"
+              >
+                <div className="flex items-center gap-2">
+                  <Wrench className="w-3.5 h-3.5 text-indigo-500" />
+                  <span>Review & Refactor</span>
+                </div>
+                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-indigo-100 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-300 font-mono">5 Agents</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => onLoadTemplate('security_audit')}
+                className="w-full flex items-center justify-between gap-2 px-3 py-1.5 rounded-xl text-xs font-semibold bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200 border border-gray-300 dark:border-gray-700 transition transform active:scale-95"
+              >
+                <div className="flex items-center gap-2">
+                  <ShieldAlert className="w-3.5 h-3.5 text-rose-500" />
+                  <span>Security & Compliance</span>
+                </div>
+                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-300 font-mono">3 Agents</span>
               </button>
 
               <button
                 type="button"
                 onClick={() => onLoadTemplate('fast_feature')}
-                className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200 border border-gray-300 dark:border-gray-700 transition transform active:scale-95"
+                className="w-full flex items-center justify-between gap-2 px-3 py-1.5 rounded-xl text-xs font-semibold bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200 border border-gray-300 dark:border-gray-700 transition transform active:scale-95"
               >
-                <span>Load Fast Feature Pipeline (4 Agents)</span>
+                <div className="flex items-center gap-2">
+                  <Zap className="w-3.5 h-3.5 text-purple-500" />
+                  <span>Fast Feature Pipeline</span>
+                </div>
+                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-purple-100 text-purple-700 dark:bg-purple-500/20 dark:text-purple-300 font-mono">4 Agents</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => onLoadTemplate('db_migration_audit')}
+                className="w-full flex items-center justify-between gap-2 px-3 py-1.5 rounded-xl text-xs font-semibold bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200 border border-gray-300 dark:border-gray-700 transition transform active:scale-95"
+              >
+                <div className="flex items-center gap-2">
+                  <Database className="w-3.5 h-3.5 text-emerald-500" />
+                  <span>Database Migration</span>
+                </div>
+                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300 font-mono">3 Agents</span>
               </button>
 
               <button
                 type="button"
                 onClick={() => onLoadTemplate('bug_hotfix')}
-                className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200 border border-gray-300 dark:border-gray-700 transition transform active:scale-95"
+                className="w-full flex items-center justify-between gap-2 px-3 py-1.5 rounded-xl text-xs font-semibold bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200 border border-gray-300 dark:border-gray-700 transition transform active:scale-95"
               >
-                <span>Load Bug Hotfix Pipeline (3 Agents)</span>
+                <div className="flex items-center gap-2">
+                  <Flame className="w-3.5 h-3.5 text-rose-500" />
+                  <span>Bug Hotfix Pipeline</span>
+                </div>
+                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-300 font-mono">3 Agents</span>
               </button>
             </div>
           </div>
