@@ -1,0 +1,526 @@
+import { NodeSkinTheme } from '../types/skins';
+import { NodeExecutionStatus } from '../types';
+
+export const CHIBI_DIALOGUES: Record<
+  NodeSkinTheme,
+  Record<
+    string,
+    Record<
+      NodeExecutionStatus | 'default',
+      { en: string; vi: string }
+    >
+  >
+> = {
+  feudal: {
+    pm: {
+      idle: {
+        en: 'Awaiting petitions & market scrolls...',
+        vi: 'Trẫm đang đợi tấu chương bá quan...',
+      },
+      pending: {
+        en: 'Drafting the imperial mandate...',
+        vi: 'Chuẩn bị hạ chiếu ban thưởng...',
+      },
+      running: {
+        en: '📜 Delivering Royal Edict to the Strategist!',
+        vi: '📜 Đích thân truyền Thánh chỉ cho Thừa Tướng!',
+      },
+      violation_paused: {
+        en: '⚡ Insolence! Who dared breach forbidden code?!',
+        vi: '⚡ To gan! Kẻ nào dám tự ý sửa file cấm?!',
+      },
+      completed: {
+        en: 'Imperial mandate fulfilled! I am well pleased.',
+        vi: 'Thánh chỉ đã ban, trẫm rất hài lòng!',
+      },
+      waiting_approval: {
+        en: 'Waiting for imperial court consensus...',
+        vi: 'Chờ triều thần đồng thuận phê duyệt...',
+      },
+      queued_lock: {
+        en: 'Holding court seal for lock release...',
+        vi: 'Ngọc tỷ đang chờ giải phóng khóa...',
+      },
+      failed: {
+        en: 'The imperial plan met an obstacle!',
+        vi: 'Chiếu chỉ gặp trắc trở, cần định đoạt lại!',
+      },
+      skipped: { en: 'Decree bypassed.', vi: 'Miễn trừ chiếu này.' },
+      rejected: { en: 'Petition rejected by court.', vi: 'Đã bác bỏ tấu chương.' },
+      default: { en: 'Long live the Dynasty!', vi: 'Vạn tuế, vạn tuế!' },
+    },
+    architect: {
+      idle: {
+        en: 'Reading astronomical signs for API specs...',
+        vi: 'Bấm quẻ phong thủy xem cấu trúc API...',
+      },
+      pending: {
+        en: 'Awaiting His Majesty\'s decree...',
+        vi: 'Kính cẩn chờ thánh chỉ của bệ hạ...',
+      },
+      running: {
+        en: '🗺️ Laying out grand battle topology & ADRs!',
+        vi: '🗺️ Bày binh bố trận, vẽ sa bàn kiến trúc!',
+      },
+      violation_paused: {
+        en: '⚠️ Sire! An unauthorized intruder breached the formation!',
+        vi: '⚠️ Bẩm bệ hạ, có kẻ phá vỡ đại trận!',
+      },
+      completed: {
+        en: 'Strategy complete! Dispatching orders to the Generals!',
+        vi: 'Kế sách đã định, truyền hịch cho chư tướng!',
+      },
+      waiting_approval: { en: 'Awaiting court blessing...', vi: 'Chờ lệnh phê chuẩn kế sách...' },
+      queued_lock: { en: 'Waiting for blueprints lock...', vi: 'Chờ giải phóng văn thư...' },
+      failed: { en: 'Flaw in the strategy layout!', vi: 'Mưu lược gặp trở ngại!' },
+      skipped: { en: 'Strategy skipped.', vi: 'Bỏ qua trận đồ này.' },
+      rejected: { en: 'Plan dismissed.', vi: 'Kế hoạch bị bác.' },
+      default: { en: 'Wisdom guides our realm.', vi: 'Mưu định càn khôn.' },
+    },
+    database: {
+      idle: {
+        en: 'Royal Treasury locked, not a coin out of place...',
+        vi: 'Quốc khố nghiêm mật, một xu không lọt...',
+      },
+      pending: {
+        en: 'Awaiting requisition for data reserves...',
+        vi: 'Chờ lệnh mở kho cấp phát dữ liệu...',
+      },
+      running: {
+        en: '🗝️ Opening vaults & executing schema migrations!',
+        vi: '🗝️ Mở quốc khố, ban phát lược đồ dữ liệu!',
+      },
+      violation_paused: {
+        en: '🚨 Thieves raiding unauthorized vault chambers!',
+        vi: '🚨 Có trộm đột nhập kho dữ liệu hoàng cung!',
+      },
+      completed: {
+        en: 'Treasury tables normalized and secured!',
+        vi: 'Kho tàng đầy ắp, dữ liệu quy củ!',
+      },
+      waiting_approval: { en: 'Need audit sign-off...', vi: 'Chờ dấu triện thủ kho...' },
+      queued_lock: { en: 'Vault door locked by another task...', vi: 'Kho đang khóa bởi nhánh khác...' },
+      failed: { en: 'Migration failed to commit!', vi: 'Lỗi ghi sổ kho bạc!' },
+      skipped: { en: 'Vault skipped.', vi: 'Bỏ qua kho này.' },
+      rejected: { en: 'Request declined.', vi: 'Từ chối mở kho.' },
+      default: { en: 'Wealth secures the kingdom.', vi: 'Quốc phú binh cường.' },
+    },
+    backend: {
+      idle: {
+        en: 'Sharpening heavy blades for combat...',
+        vi: 'Đang lau gươm mài giáo chờ lệnh...',
+      },
+      pending: {
+        en: 'Battalion standing at attention...',
+        vi: 'Ba quân tướng sĩ sẵn sàng nghênh chiến...',
+      },
+      running: {
+        en: '⚔️ Charging the frontline! Slashing backend logic!',
+        vi: '⚔️ Xung trận! Chém sạch mọi bug logic!',
+      },
+      violation_paused: {
+        en: '🛑 Ambushed! Troops strayed into forbidden territory!',
+        vi: '🛑 Quân ta lạc vào vùng cấm, xin cứu viện!',
+      },
+      completed: {
+        en: 'Triumphant return! Backend citadel fortified!',
+        vi: 'Khải hoàn! Tiêu diệt toàn bộ task backend!',
+      },
+      waiting_approval: { en: 'Awaiting battle horn...', vi: 'Chờ lệnh nổi trống xung trận...' },
+      queued_lock: { en: 'Blocked at the city gate lock...', vi: 'Chờ mở cổng thành...' },
+      failed: { en: 'Troops took casualties (Runtime error)!', vi: 'Trận hình bị vỡ!' },
+      skipped: { en: 'Battle bypassed.', vi: 'Miễn chiến.' },
+      rejected: { en: 'Retreat ordered.', vi: 'Thu quân.' },
+      default: { en: 'Victory or honor!', vi: 'Bách chiến bách thắng!' },
+    },
+    frontend: {
+      idle: {
+        en: 'Designing vanguard war banners & shields...',
+        vi: 'Đang thêu cờ chiến, mài dũa khiên giáp...',
+      },
+      pending: {
+        en: 'Vanguard scouts awaiting the charge...',
+        vi: 'Đội tiên phong chờ hiệu lệnh xuất kích...',
+      },
+      running: {
+        en: '🚩 Deploying front battlements & stunning interfaces!',
+        vi: '🚩 Dựng chiến lũy giao diện rực rỡ tiền tuyến!',
+      },
+      violation_paused: {
+        en: '🛑 Vanguard trapped outside authorized boundary!',
+        vi: '🛑 Tiên phong bị kẹt ngoài biên ải trái phép!',
+      },
+      completed: {
+        en: 'Frontline victorious! Majestic views deployed!',
+        vi: 'Mặt tiền rực rỡ, giao diện đã hoàn tất!',
+      },
+      waiting_approval: { en: 'Awaiting design review...', vi: 'Chờ ngự lãm sa bàn giao diện...' },
+      queued_lock: { en: 'Waiting for visual locks...', vi: 'Chờ mở đường tiến quân...' },
+      failed: { en: 'Visual assets collapsed!', vi: 'Giao diện gặp sự cố!' },
+      skipped: { en: 'UI step skipped.', vi: 'Bỏ qua bước này.' },
+      rejected: { en: 'Design rejected.', vi: 'Không thông qua sa bàn.' },
+      default: { en: 'Glory to the frontline!', vi: 'Tiên phong dũng mãnh!' },
+    },
+    qa: {
+      idle: {
+        en: 'Polishing royal magnifying glass...',
+        vi: 'Soi xét kỷ cương, tra xét luật triều...',
+      },
+      pending: {
+        en: 'Ready to inspect the marching battalions...',
+        vi: 'Chuẩn bị kiểm duyệt quân ngũ...',
+      },
+      running: {
+        en: '🔍 Scrutinizing every character and test case!',
+        vi: '🔍 Soi từng nét chữ, không tha lỗi nào!',
+      },
+      violation_paused: {
+        en: '⚖️ Caught red-handed! Violation of royal law!',
+        vi: '⚖️ Bắt quả tang vi phạm luật triều đình!',
+      },
+      completed: {
+        en: 'Flawless standards! High quality approved!',
+        vi: 'Kỷ cương nghiêm minh, không tì vết!',
+      },
+      waiting_approval: { en: 'Awaiting audit seal...', vi: 'Chờ con dấu giám sát...' },
+      queued_lock: { en: 'Waiting for test harness lock...', vi: 'Chờ khóa kiểm thử...' },
+      failed: { en: 'Defects discovered in the ranks!', vi: 'Phát hiện sai phạm!' },
+      skipped: { en: 'Audit skipped.', vi: 'Miễn xét.' },
+      rejected: { en: 'Quality rejected.', vi: 'Bác bỏ chất lượng.' },
+      default: { en: 'Justice and precision.', vi: 'Chí công vô tư.' },
+    },
+    security: {
+      idle: {
+        en: 'Shadow guards patrolling imperial battlements...',
+        vi: 'Cẩm y vệ tuần tra bóng tối hoàng thành...',
+      },
+      pending: {
+        en: 'Perimeter radar scanning for intruders...',
+        vi: 'Mắt ưng dõi theo bốn cổng thành...',
+      },
+      running: {
+        en: '🗡️ Neutralizing zero-day OWASP assassins!',
+        vi: '🗡️ Truy lùng và hạ sát thích khách bảo mật!',
+      },
+      violation_paused: {
+        en: '🚨 Assassin breach! Citadel under full quarantine!',
+        vi: '🚨 Thích khách xâm nhập! Phong tỏa hoàng cung!',
+      },
+      completed: {
+        en: 'Citadel secure! Zero vulnerabilities detected.',
+        vi: 'Hoàng cung tuyệt mật, vạn sự bình an!',
+      },
+      waiting_approval: { en: 'Awaiting security clearance...', vi: 'Chờ mật lệnh an ninh...' },
+      queued_lock: { en: 'Defense gates locked...', vi: 'Cửa ải đang khóa...' },
+      failed: { en: 'Security leak detected!', vi: 'Thủng lưới phòng thủ!' },
+      skipped: { en: 'Defense bypassed.', vi: 'Bỏ qua trinh sát.' },
+      rejected: { en: 'Access denied.', vi: 'Cấm vượt ải.' },
+      default: { en: 'Silent guardians of the realm.', vi: 'Thần đao hộ quốc.' },
+    },
+  },
+
+  capitalist: {
+    pm: {
+      idle: { en: 'Reviewing quarterly revenue forecasts...', vi: 'Soát xét dự báo doanh thu quý...' },
+      pending: { en: 'Budget ready for investment sign-off...', vi: 'Ngân sách sẵn sàng giải ngân...' },
+      running: { en: '💼 Authorizing $10M Capex & Product Launch!', vi: '💼 Duyệt vốn 10 triệu USD, bấm nút triển khai!' },
+      violation_paused: { en: '🚨 Embezzlement detected! Unauthorized assets touched!', vi: '🚨 Gian lận sổ sách! Ai dám sửa tài sản ngoài danh mục?!' },
+      completed: { en: 'Record valuation! Stock price hits all-time high!', vi: 'Cổ phiếu kịch trần, lợi nhuận bùng nổ!' },
+      waiting_approval: { en: 'Shareholders voting...', vi: 'Đang họp cổ đông...' },
+      queued_lock: { en: 'Waiting for escrow release...', vi: 'Chờ giải tỏa tài khoản ký quỹ...' },
+      failed: { en: 'Market flash crash!', vi: 'Thị trường sụt giảm!' },
+      skipped: { en: 'Deal skipped.', vi: 'Bỏ qua thương vụ.' },
+      rejected: { en: 'Deal terminated.', vi: 'Bác bỏ hợp đồng.' },
+      default: { en: 'Greed is good.', vi: 'Lợi nhuận là trên hết.' },
+    },
+    architect: {
+      idle: { en: 'Drafting high-margin business blueprints...', vi: 'Vẽ bản đồ tối ưu biên lợi nhuận...' },
+      pending: { en: 'Strategy model formulated...', vi: 'Mô hình chiến lược đã định hình...' },
+      running: { en: '📊 Architecting enterprise monetization engine!', vi: '📊 Thiết kế cỗ máy hái ra tiền!' },
+      violation_paused: { en: '⚠️ Contract breached! Unauthorized structure modification!', vi: '⚠️ Vi phạm hợp đồng đối tác!' },
+      completed: { en: 'Scalable architecture delivered on budget.', vi: 'Kiến trúc tối ưu chi phí hoàn tất.' },
+      waiting_approval: { en: 'Board review pending...', vi: 'Chờ hội đồng thông qua...' },
+      queued_lock: { en: 'Holding patent lock...', vi: 'Chờ khóa bằng sáng chế...' },
+      failed: { en: 'Strategy failed benchmark.', vi: 'Chiến lược không đạt KPI.' },
+      skipped: { en: 'Skipped.', vi: 'Bỏ qua.' },
+      rejected: { en: 'Rejected.', vi: 'Bị từ chối.' },
+      default: { en: 'Scale to billions.', vi: 'Định giá tỷ đô.' },
+    },
+    database: {
+      idle: { en: 'Counting gold reserves in the vault...', vi: 'Đếm vàng trong két sắt ngân quỹ...' },
+      pending: { en: 'Liquidity pool prepared...', vi: 'Thanh khoản đã sẵn sàng...' },
+      running: { en: '💰 Injecting liquidity into database ledgers!', vi: '💰 Bơm vốn dữ liệu vào sổ cái ngân hàng!' },
+      violation_paused: { en: '🚨 Vault alarm! Someone touched unauthorized accounts!', vi: '🚨 Két sắt báo động! Sửa sai tài khoản dữ liệu!' },
+      completed: { en: 'Balance sheet balanced to the penny!', vi: 'Sổ cái cân đối hoàn hảo từng xu!' },
+      waiting_approval: { en: 'Auditor sign-off needed...', vi: 'Chờ kiểm toán viên ký...' },
+      queued_lock: { en: 'Vault door locked...', vi: 'Khóa cửa kho tiền...' },
+      failed: { en: 'Bankruptcy exception!', vi: 'Khủng hoảng thanh khoản!' },
+      skipped: { en: 'Skipped.', vi: 'Bỏ qua.' },
+      rejected: { en: 'Rejected.', vi: 'Bác bỏ.' },
+      default: { en: 'In data we trust.', vi: 'Tiền là huyết mạch.' },
+    },
+    backend: {
+      idle: { en: 'Calibrating high-frequency trading bots...', vi: 'Căn chỉnh bot giao dịch tần số cao...' },
+      pending: { en: 'Quant algorithms armed...', vi: 'Thuật toán Quant sẵn sàng...' },
+      running: { en: '⚡ Firing 10,000 orders/sec into backend engines!', vi: '⚡ Xử lý 10.000 lệnh/giây qua cỗ máy backend!' },
+      violation_paused: { en: '🛑 Trading halted! Rogue orders outside authorized routes!', vi: '🛑 Dừng giao dịch! Sửa nhầm API ngoài quyền hạn!' },
+      completed: { en: 'Execution filled! Massive arbitrage captured!', vi: 'Khớp lệnh thành công, biên lợi nhuận rực rỡ!' },
+      waiting_approval: { en: 'Compliance sign-off...', vi: 'Chờ duyệt tuân thủ...' },
+      queued_lock: { en: 'Waiting for order book lock...', vi: 'Chờ mở sổ lệnh...' },
+      failed: { en: 'Order rejected!', vi: 'Lỗi khớp lệnh!' },
+      skipped: { en: 'Skipped.', vi: 'Bỏ qua.' },
+      rejected: { en: 'Rejected.', vi: 'Bác bỏ.' },
+      default: { en: 'Time is money.', vi: 'Thời gian là tiền bạc.' },
+    },
+    frontend: {
+      idle: { en: 'Designing conversion-focused landing banners...', vi: 'Thiết kế banner tối ưu chuyển đổi...' },
+      pending: { en: 'Campaign primed for release...', vi: 'Chiến dịch sắp khai màn...' },
+      running: { en: '🎨 Launching high-conversion luxury storefronts!', vi: '🎨 Triển khai giao diện triệu đô thu hút khách VIP!' },
+      violation_paused: { en: '🛑 Brand damage! Unauthorized styling applied!', vi: '🛑 Lạc luồng thương hiệu! Sửa file sai danh mục!' },
+      completed: { en: 'Conversion rate +400%! Customers mesmerized.', vi: 'Tỷ lệ chuyển đổi tăng 400%, giao diện hoàn mỹ!' },
+      waiting_approval: { en: 'Waiting CMO sign-off...', vi: 'Chờ duyệt thiết kế...' },
+      queued_lock: { en: 'Waiting for visual locks...', vi: 'Chờ mở khóa tài nguyên...' },
+      failed: { en: 'UX breakdown!', vi: 'Lỗi hiển thị giao diện!' },
+      skipped: { en: 'Skipped.', vi: 'Bỏ qua.' },
+      rejected: { en: 'Rejected.', vi: 'Bác bỏ.' },
+      default: { en: 'Design sells.', vi: 'Đẹp là ra tiền.' },
+    },
+    qa: {
+      idle: { en: 'Scrutinizing accounting ledgers...', vi: 'Soi xét báo cáo tài chính...' },
+      pending: { en: 'Audit checklist ready...', vi: 'Bảng kiểm toán đã chuẩn bị...' },
+      running: { en: '🔍 Running rigorous compliance & stress tests!', vi: '🔍 Kiểm toán gắt gao, thử tải chịu đựng rủi ro!' },
+      violation_paused: { en: '⚖️ Fraud detected! Unauthorized file tampering!', vi: '⚖️ Phát hiện vi phạm sổ sách nghiêm trọng!' },
+      completed: { en: 'Clean audit report! Passed with flying colors.', vi: 'Kiểm toán trong sạch, chứng nhận chuẩn quốc tế!' },
+      waiting_approval: { en: 'Audit awaiting committee...', vi: 'Chờ hội đồng kiểm toán...' },
+      queued_lock: { en: 'Waiting for ledger lock...', vi: 'Chờ khóa sổ cái...' },
+      failed: { en: 'Audit failed with discrepancies!', vi: 'Không vượt qua kiểm toán!' },
+      skipped: { en: 'Skipped.', vi: 'Bỏ qua.' },
+      rejected: { en: 'Rejected.', vi: 'Bác bỏ.' },
+      default: { en: 'Trust but verify.', vi: 'Kiểm soát mọi rủi ro.' },
+    },
+    security: {
+      idle: { en: 'Reviewing nondisclosure agreements...', vi: 'Rà soát hợp đồng bảo mật...' },
+      pending: { en: 'Security perimeter online...', vi: 'Vành đai bảo mật trực tuyến...' },
+      running: { en: '🛡️ Deploying military-grade corporate firewall!', vi: '🛡️ Triển khai tường lửa bảo vệ bí mật kinh doanh!' },
+      violation_paused: { en: '🚨 Corporate espionage! Unauthorized breach logged!', vi: '🚨 Gián điệp công nghiệp! Khóa toàn bộ tài sản!' },
+      completed: { en: 'Intellectual property bulletproofed.', vi: 'Sở hữu trí tuệ an toàn tuyệt đối!' },
+      waiting_approval: { en: 'Waiting legal clearance...', vi: 'Chờ cố vấn pháp chế...' },
+      queued_lock: { en: 'Security lockdown active...', vi: 'Vành đai đang khóa...' },
+      failed: { en: 'Security leak detected!', vi: 'Rò rỉ thông tin mật!' },
+      skipped: { en: 'Skipped.', vi: 'Bỏ qua.' },
+      rejected: { en: 'Rejected.', vi: 'Bác bỏ.' },
+      default: { en: 'Zero trust enterprise.', vi: 'Không khoan nhượng.' },
+    },
+  },
+
+  cyberpunk: {
+    pm: {
+      idle: { en: 'Scanning galactic radar for mission pings...', vi: 'Quét radar không gian dò tìm tín hiệu...' },
+      pending: { en: 'Hyper-drive coordinates locked...', vi: 'Tọa độ siêu không gian đã khóa...' },
+      running: { en: '🚀 Launching Fleet Mission Alpha!', vi: '🚀 Phát lệnh xuất kích toàn hạm đội!' },
+      violation_paused: { en: '⚡ Cyber breach! Rogue signal in unauthorized sector!', vi: '⚡ Cảnh báo! Tín hiệu lạ sửa đổi vùng cấm!' },
+      completed: { en: 'Galactic sector secured. Mission accomplished.', vi: 'Khu vực không gian đã kiểm soát hoàn toàn!' },
+      waiting_approval: { en: 'Waiting command link...', vi: 'Chờ liên kết chỉ huy...' },
+      queued_lock: { en: 'Locking hyper-drive...', vi: 'Chờ động cơ lượng tử...' },
+      failed: { en: 'Fleet suffered malfunction!', vi: 'Hạm đội gặp trục trặc!' },
+      skipped: { en: 'Skipped.', vi: 'Bỏ qua.' },
+      rejected: { en: 'Rejected.', vi: 'Bác bỏ.' },
+      default: { en: 'Neon into the void.', vi: 'Ánh sáng neon vũ trụ.' },
+    },
+    architect: {
+      idle: { en: 'Simulating neural matrix topologies...', vi: 'Mô phỏng topo ma trận thần kinh...' },
+      pending: { en: 'Matrix link standing by...', vi: 'Đường truyền ma trận sẵn sàng...' },
+      running: { en: '🧬 Weaving quantum network hyper-threads!', vi: '🧬 Đan dệt lưới xung lượng tử mạng!' },
+      violation_paused: { en: '⚠️ Anomaly detected in subnet!', vi: '⚠️ Phát hiện dị thường trong mạng con!' },
+      completed: { en: 'Matrix framework stabilized.', vi: 'Kiến trúc lượng tử ổn định tuyệt đối.' },
+      waiting_approval: { en: 'Waiting sync...', vi: 'Chờ đồng bộ...' },
+      queued_lock: { en: 'Subnet locked...', vi: 'Khóa mạng con...' },
+      failed: { en: 'Matrix desync!', vi: 'Mất đồng bộ ma trận!' },
+      skipped: { en: 'Skipped.', vi: 'Bỏ qua.' },
+      rejected: { en: 'Rejected.', vi: 'Bác bỏ.' },
+      default: { en: 'Data is reality.', vi: 'Dữ liệu là thực tại.' },
+    },
+    database: {
+      idle: { en: 'Hyper-cube quantum storage spinning...', vi: 'Khối lưu trữ lượng tử đang quay...' },
+      pending: { en: 'Data cores chilled to absolute zero...', vi: 'Lõi dữ liệu làm lạnh tuyệt đối...' },
+      running: { en: '💽 Injecting petabytes into crystalline cores!', vi: '💽 Bơm Petabyte vào tinh thể lưu trữ!' },
+      violation_paused: { en: '🚨 Core breach! Unauthorized data injection!', vi: '🚨 Xâm nhập lõi! Có mã lạ tiêm vào dữ liệu!' },
+      completed: { en: 'Storage synced across parallel dimensions.', vi: 'Dữ liệu đồng bộ đa chiều không gian!' },
+      waiting_approval: { en: 'Waiting key...', vi: 'Chờ khóa...' },
+      queued_lock: { en: 'Core locked...', vi: 'Lõi đang khóa...' },
+      failed: { en: 'Memory leak!', vi: 'Tràn bộ nhớ tinh thể!' },
+      skipped: { en: 'Skipped.', vi: 'Bỏ qua.' },
+      rejected: { en: 'Rejected.', vi: 'Bác bỏ.' },
+      default: { en: 'Infinite storage.', vi: 'Lưu trữ vĩnh cửu.' },
+    },
+    backend: {
+      idle: { en: 'Idling fusion turbine reactors...', vi: 'Động cơ phản lực lượng tử chạy chậm...' },
+      pending: { en: 'Thrusters charged to 100%...', vi: 'Động cơ đẩy nạp 100%...' },
+      running: { en: '🦾 Plasma cannons blazing! Crushing calculations!', vi: '🦾 Pháo Plasma khai hỏa! Xử lý thần tốc!' },
+      violation_paused: { en: '🛑 Mecha strayed outside navigation grid!', vi: '🛑 Mecha trật khỏi tọa độ cấp phép!' },
+      completed: { en: 'Target obliterated! Fusion reactor stable.', vi: 'Mục tiêu tiêu diệt, động cơ ổn định!' },
+      waiting_approval: { en: 'Waiting fire command...', vi: 'Chờ lệnh khai hỏa...' },
+      queued_lock: { en: 'Thruster lock...', vi: 'Khóa động cơ...' },
+      failed: { en: 'Mecha shutdown!', vi: 'Mecha ngắt nguồn khẩn cấp!' },
+      skipped: { en: 'Skipped.', vi: 'Bỏ qua.' },
+      rejected: { en: 'Rejected.', vi: 'Bác bỏ.' },
+      default: { en: 'Maximum firepower.', vi: 'Hỏa lực tối đa.' },
+    },
+    frontend: {
+      idle: { en: 'Calibrating neural retina visors...', vi: 'Căn chỉnh thị kính thần kinh...' },
+      pending: { en: 'Holo-matrix ready...', vi: 'Màn hình chiếu sẵn sàng...' },
+      running: { en: '🌌 Projecting 3D holographic neural interface!', vi: '🌌 Chiếu giao diện Hologram 3D đa chiều!' },
+      violation_paused: { en: '🛑 Glitch! Unauthorized signal interfering!', vi: '🛑 Nhiễu sóng! Có tín hiệu lạ can thiệp!' },
+      completed: { en: 'Cyberpunk HUD fully operational.', vi: 'Giao diện tương lai kích hoạt thành công.' },
+      waiting_approval: { en: 'Waiting display sync...', vi: 'Chờ đồng bộ thị kính...' },
+      queued_lock: { en: 'HUD locked...', vi: 'Khóa giao diện...' },
+      failed: { en: 'HUD blackout!', vi: 'Mất tín hiệu màn hình!' },
+      skipped: { en: 'Skipped.', vi: 'Bỏ qua.' },
+      rejected: { en: 'Rejected.', vi: 'Bác bỏ.' },
+      default: { en: 'Visual cybernetic.', vi: 'Thị giác lượng tử.' },
+    },
+    qa: {
+      idle: { en: 'Drone scouting sensor signals...', vi: 'Drone trinh sát quét tín hiệu...' },
+      pending: { en: 'Sensors on high sensitivity...', vi: 'Cảm biến nhạy tối đa...' },
+      running: { en: '🛰️ Deep neural scanning for algorithmic anomalies!', vi: '🛰️ Quét sâu tìm dị thường mã nguồn!' },
+      violation_paused: { en: '⚖️ Red Alert! Breach detected by AI sensors!', vi: '⚖️ Cảnh báo đỏ! Drone phát hiện vi phạm!' },
+      completed: { en: 'Zero glitches across 1,000 simulations.', vi: 'Không có lỗi qua 1.000 giả lập.' },
+      waiting_approval: { en: 'Waiting scan pass...', vi: 'Chờ duyệt quét...' },
+      queued_lock: { en: 'Sensors locked...', vi: 'Khóa cảm biến...' },
+      failed: { en: 'Bug storm detected!', vi: 'Bão lỗi phần mềm!' },
+      skipped: { en: 'Skipped.', vi: 'Bỏ qua.' },
+      rejected: { en: 'Rejected.', vi: 'Bác bỏ.' },
+      default: { en: 'Nothing escapes radar.', vi: 'Không gì lọt qua cảm biến.' },
+    },
+    security: {
+      idle: { en: 'Plasma shields humming quietly...', vi: 'Khiên plasma vo ve tuần tra...' },
+      pending: { en: 'Defense grid charged...', vi: 'Lưới phòng thủ nạp đầy...' },
+      running: { en: '🛡️ Raising impenetrable EMP & quantum shields!', vi: '🛡️ Dựng lá chắn lượng tử kháng EMP!' },
+      violation_paused: { en: '🚨 Shield breach! Unauthorized probe neutralized!', vi: '🚨 Khiên bị chọc thủng! Phong tỏa mã độc!' },
+      completed: { en: 'Core defense impenetrable.', vi: 'Hệ thống phòng thủ an toàn 100%.' },
+      waiting_approval: { en: 'Waiting clearance...', vi: 'Chờ mã an ninh...' },
+      queued_lock: { en: 'Shield locked...', vi: 'Khóa khiên...' },
+      failed: { en: 'Shield collapsed!', vi: 'Sập khiên bảo vệ!' },
+      skipped: { en: 'Skipped.', vi: 'Bỏ qua.' },
+      rejected: { en: 'Rejected.', vi: 'Bác bỏ.' },
+      default: { en: 'Shields at 100%.', vi: 'Lá chắn bất khả xâm phạm.' },
+    },
+  },
+
+  corporate: {
+    pm: {
+      idle: { en: 'Reviewing backlog & product roadmap...', vi: 'Đang xem xét backlog & lộ trình sản phẩm...' },
+      pending: { en: 'Sprint plan queued for launch...', vi: 'Kế hoạch Sprint đã sẵn sàng...' },
+      running: { en: '🚀 Handing off user stories to Architect!', vi: '🚀 Chuyển giao User Stories cho Kiến trúc sư!' },
+      violation_paused: { en: '🚨 Scope breach! Files modified outside allowed paths!', vi: '🚨 Vi phạm phạm vi! Phát hiện sửa file cấm!' },
+      completed: { en: 'Sprint scope delivered successfully!', vi: 'Yêu cầu sản phẩm đã hoàn thành xuất sắc!' },
+      waiting_approval: { en: 'Awaiting stakeholder approval...', vi: 'Chờ các bên liên quan duyệt...' },
+      queued_lock: { en: 'Waiting for file locks...', vi: 'Chờ khóa tập tin...' },
+      failed: { en: 'Sprint goal blocked!', vi: 'Mục tiêu Sprint bị chặn!' },
+      skipped: { en: 'Skipped.', vi: 'Bỏ qua.' },
+      rejected: { en: 'Rejected.', vi: 'Bị từ chối.' },
+      default: { en: 'Delivering value.', vi: 'Tối ưu giá trị sản phẩm.' },
+    },
+    architect: {
+      idle: { en: 'Reviewing RFCs & design docs...', vi: 'Nghiên cứu tài liệu thiết kế hệ thống...' },
+      pending: { en: 'Architecture draft ready...', vi: 'Bản thảo kiến trúc đã sẵn sàng...' },
+      running: { en: '📐 Specifying API contracts & service topology!', vi: '📐 Định nghĩa hợp đồng API & kiến trúc dịch vụ!' },
+      violation_paused: { en: '⚠️ Contract violation detected!', vi: '⚠️ Phát hiện phá vỡ ranh giới kiến trúc!' },
+      completed: { en: 'API specification signed and verified.', vi: 'Đặc tả API đã chuẩn hóa và sẵn sàng.' },
+      waiting_approval: { en: 'Waiting ADR review...', vi: 'Chờ xét duyệt ADR...' },
+      queued_lock: { en: 'Waiting for lock...', vi: 'Chờ mở khóa...' },
+      failed: { en: 'Architecture error!', vi: 'Lỗi thiết kế hệ thống!' },
+      skipped: { en: 'Skipped.', vi: 'Bỏ qua.' },
+      rejected: { en: 'Rejected.', vi: 'Bác bỏ.' },
+      default: { en: 'Clean architecture.', vi: 'Kiến trúc sạch.' },
+    },
+    database: {
+      idle: { en: 'Maintaining database integrity...', vi: 'Duy trì toàn vẹn dữ liệu...' },
+      pending: { en: 'Migrations prepared in pool...', vi: 'Các tệp migration đã sẵn sàng...' },
+      running: { en: '🗄️ Executing Alembic migrations & table indices!', vi: '🗄️ Chạy migration & tối ưu hóa chỉ mục!' },
+      violation_paused: { en: '🚨 Unauthorized schema mutation!', vi: '🚨 Thay đổi cấu trúc bảng trái phép!' },
+      completed: { en: 'Database schema up to date.', vi: 'Cơ sở dữ liệu đã cập nhật phiên bản mới nhất.' },
+      waiting_approval: { en: 'Waiting DBA approval...', vi: 'Chờ DBA trưởng duyệt...' },
+      queued_lock: { en: 'Waiting table lock...', vi: 'Chờ giải phóng khóa bảng...' },
+      failed: { en: 'Migration failed!', vi: 'Lỗi chạy migration!' },
+      skipped: { en: 'Skipped.', vi: 'Bỏ qua.' },
+      rejected: { en: 'Rejected.', vi: 'Bác bỏ.' },
+      default: { en: 'Data consistency 100%.', vi: 'Toàn vẹn dữ liệu 100%.' },
+    },
+    backend: {
+      idle: { en: 'Writing unit tests and refactoring...', vi: 'Viết unit test & refactor code...' },
+      pending: { en: 'Backend worker waiting in queue...', vi: 'Tiến trình backend đang đợi trong hàng đợi...' },
+      running: { en: '⚡ Implementing FastAPI routes & services!', vi: '⚡ Xây dựng dịch vụ FastAPI & xử lý logic nghiệp vụ!' },
+      violation_paused: { en: '🛑 Scope violation! Edited frontend or root files!', vi: '🛑 Vi phạm! Backend vô tình sửa file frontend!' },
+      completed: { en: 'Endpoints tested and responding 200 OK.', vi: 'Các API đã phản hồi mã 200 OK!' },
+      waiting_approval: { en: 'Waiting PR approval...', vi: 'Chờ duyệt Pull Request...' },
+      queued_lock: { en: 'Waiting file lock...', vi: 'Chờ khóa tệp mã nguồn...' },
+      failed: { en: 'Unhandled exception in route!', vi: 'Ngoại lệ chưa xử lý!' },
+      skipped: { en: 'Skipped.', vi: 'Bỏ qua.' },
+      rejected: { en: 'Rejected.', vi: 'Bác bỏ.' },
+      default: { en: 'Robust microservices.', vi: 'Dịch vụ ổn định.' },
+    },
+    frontend: {
+      idle: { en: 'Crafting responsive atomic components...', vi: 'Phát triển các component giao diện React...' },
+      pending: { en: 'UI worker waiting for backend endpoints...', vi: 'Chờ API backend sẵn sàng...' },
+      running: { en: '💻 Building responsive React Flow UI & views!', vi: '💻 Xây dựng giao diện React mượt mà và tương tác!' },
+      violation_paused: { en: '🛑 Scope violation! Modified backend or config files!', vi: '🛑 Vi phạm! Frontend sửa nhầm file backend!' },
+      completed: { en: 'UI components rendering with zero warnings.', vi: 'Giao diện đã hiển thị hoàn mỹ!' },
+      waiting_approval: { en: 'Waiting UX sign-off...', vi: 'Chờ phê duyệt giao diện...' },
+      queued_lock: { en: 'Waiting frontend lock...', vi: 'Chờ mở khóa frontend...' },
+      failed: { en: 'Render error!', vi: 'Lỗi render giao diện!' },
+      skipped: { en: 'Skipped.', vi: 'Bỏ qua.' },
+      rejected: { en: 'Rejected.', vi: 'Bác bỏ.' },
+      default: { en: 'Pixel perfect UI.', vi: 'Giao diện sắc nét.' },
+    },
+    qa: {
+      idle: { en: 'Updating Playwright E2E suites...', vi: 'Cập nhật kịch bản kiểm thử Playwright...' },
+      pending: { en: 'Test runner ready to trigger...', vi: 'Trình chạy test đã sẵn sàng...' },
+      running: { en: '🧪 Executing automated E2E & integration suites!', vi: '🧪 Thực thi kiểm thử tự động toàn diện!' },
+      violation_paused: { en: '⚖️ Defect! Unauthorized source files edited!', vi: '⚖️ Bắt lỗi! Sửa sai tệp tin kiểm thử!' },
+      completed: { en: 'All 128 test assertions PASSED with 0 errors.', vi: 'Toàn bộ bài test đều ĐẠT (0 lỗi).' },
+      waiting_approval: { en: 'Waiting QA lead...', vi: 'Chờ trưởng nhóm QA duyệt...' },
+      queued_lock: { en: 'Waiting runner lock...', vi: 'Chờ giải phóng môi trường test...' },
+      failed: { en: 'Tests failed! Bugs logged.', vi: 'Có lỗi kiểm thử phát sinh!' },
+      skipped: { en: 'Skipped.', vi: 'Bỏ qua.' },
+      rejected: { en: 'Rejected.', vi: 'Bác bỏ.' },
+      default: { en: 'Quality first.', vi: 'Chất lượng là hàng đầu.' },
+    },
+    security: {
+      idle: { en: 'Reviewing OWASP Top 10 vulnerabilities...', vi: 'Rà quét các lỗ hổng OWASP...' },
+      pending: { en: 'Security scanner standing by...', vi: 'Trình quét bảo mật sẵn sàng...' },
+      running: { en: '🛡️ Scanning code for secret leaks & authorization flaws!', vi: '🛡️ Quét rò rỉ secret & lỗ hổng phân quyền!' },
+      violation_paused: { en: '🚨 Security breach! Unauthorized modification quarantined!', vi: '🚨 Báo động an ninh! Cách ly sửa đổi trái phép!' },
+      completed: { en: 'Security audit PASSED. Codebase hardened.', vi: 'Kiểm toán bảo mật ĐẠT chuẩn an toàn.' },
+      waiting_approval: { en: 'Waiting CISO clearance...', vi: 'Chờ duyệt an ninh...' },
+      queued_lock: { en: 'Security lock active...', vi: 'Đang khóa bảo mật...' },
+      failed: { en: 'Critical CVE detected!', vi: 'Phát hiện lỗ hổng nghiêm trọng!' },
+      skipped: { en: 'Skipped.', vi: 'Bỏ qua.' },
+      rejected: { en: 'Rejected.', vi: 'Bác bỏ.' },
+      default: { en: 'Zero trust security.', vi: 'Bảo mật tuyệt đối.' },
+    },
+  },
+};
+
+export function getChibiDialogue(
+  skin: NodeSkinTheme,
+  roleKey: string,
+  status: NodeExecutionStatus = 'idle',
+  lang: 'en' | 'vi' = 'vi'
+): string {
+  const normalizedKey = roleKey.toLowerCase();
+  let mappedKey = 'backend';
+  if (normalizedKey.includes('pm')) mappedKey = 'pm';
+  else if (normalizedKey.includes('arch')) mappedKey = 'architect';
+  else if (normalizedKey.includes('db') || normalizedKey.includes('database')) mappedKey = 'database';
+  else if (normalizedKey.includes('be') || normalizedKey.includes('backend')) mappedKey = 'backend';
+  else if (normalizedKey.includes('fe') || normalizedKey.includes('frontend')) mappedKey = 'frontend';
+  else if (normalizedKey.includes('qa')) mappedKey = 'qa';
+  else if (normalizedKey.includes('sec') || normalizedKey.includes('security')) mappedKey = 'security';
+
+  const skinDict = CHIBI_DIALOGUES[skin] || CHIBI_DIALOGUES.feudal;
+  const roleDict = skinDict[mappedKey] || skinDict['backend'];
+  const statusDict = roleDict[status] || roleDict.default || { en: 'Ready!', vi: 'Sẵn sàng!' };
+
+  return lang === 'vi' ? statusDict.vi : statusDict.en;
+}

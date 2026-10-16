@@ -52,3 +52,7 @@ Thumbs.db
 # Logs
 logs/
 *.log
+
+# Test Workspaces & Sandboxes
+lan_snake_workspace/
+test_e2e_lan_snake.py

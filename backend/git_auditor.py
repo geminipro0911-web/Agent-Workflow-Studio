@@ -18,8 +18,11 @@ from typing import Any, Dict, List, Optional, Tuple
 
 
 def normalize_posix_path(path_str: str) -> str:
-    """Normalize file path to POSIX forward slash style."""
-    return PurePath(path_str.strip()).as_posix()
+    """Normalize file path to POSIX forward slash style cross-platform.
+    Strips quotes, trims whitespace, and converts backslashes to forward slashes.
+    """
+    cleaned = path_str.strip().strip('"').strip("'").replace("\\", "/")
+    return PurePath(cleaned).as_posix()
 
 
 def is_path_allowed(file_path: str, allowed_patterns: List[str]) -> bool:
@@ -99,6 +102,37 @@ class GitScopeAuditor:
     def __init__(self, git_binary: str = "git"):
         self.git_binary = git_binary
 
+    def validate_git_repository(self, project_dir: str) -> Tuple[bool, Optional[str]]:
+        """Validate that target_project_dir is an initialized Git repository with an initial commit.
+        
+        Returns:
+            Tuple[bool, Optional[str]]: (is_valid, error_message_or_none)
+        """
+        if not project_dir or not os.path.exists(project_dir):
+            return False, f"Thư mục dự án không tồn tại: '{project_dir}'"
+
+        if not os.path.isdir(project_dir):
+            return False, f"Đường dẫn dự án không phải là thư mục: '{project_dir}'"
+
+        # Check if git repository exists
+        code, out, err = self._run_git(project_dir, ["rev-parse", "--is-inside-work-tree"])
+        if code != 0 or out.strip() != "true":
+            return False, (
+                f"Thư mục '{project_dir}' chưa được khởi tạo Git (.git). "
+                "Vui lòng chạy 'git init' và tạo commit đầu tiên trước khi thực thi workflow để Git Diff Auditor có thể theo dõi thay đổi."
+            )
+
+        # Check if HEAD commit exists
+        code, out, err = self._run_git(project_dir, ["rev-parse", "--verify", "HEAD"])
+        if code != 0:
+            return False, (
+                f"Thư mục Git '{project_dir}' chưa có commit đầu tiên. "
+                "Vui lòng tạo ít nhất một commit ban đầu (ví dụ: 'git add . && git commit -m \"Initial commit\"') "
+                "để Git Diff Auditor có mốc so sánh (HEAD)."
+            )
+
+        return True, None
+
     def _run_git(self, project_dir: str, args: List[str]) -> Tuple[int, str, str]:
         """Execute a git command within the specified project directory."""
         try:
@@ -119,16 +153,15 @@ class GitScopeAuditor:
         """Parse `git status --porcelain` output into a dict of {posix_file_path: status_code}."""
         status_map: Dict[str, str] = {}
         for line in raw_status.splitlines():
-            line = line.strip()
-            if not line:
+            # Preserve columns 0 and 1; do not strip before reading code
+            if not line or len(line) < 3:
                 continue
-            # Porcelain format: "XY path" or "XY old_path -> new_path"
-            if len(line) >= 3:
-                code = line[:2].strip()
-                path_part = line[2:].strip()
-                if "->" in path_part:
-                    path_part = path_part.split("->")[-1].strip()
-                norm = normalize_posix_path(path_part)
+            code = line[:2].strip()
+            path_part = line[2:].strip()
+            if "->" in path_part:
+                path_part = path_part.split("->")[-1].strip()
+            norm = normalize_posix_path(path_part)
+            if norm:
                 status_map[norm] = code
         return status_map
 
@@ -148,7 +181,9 @@ class GitScopeAuditor:
         self,
         project_dir: str,
         snapshot: Dict[str, str],
-        allowed_paths: List[str]
+        allowed_paths: List[str],
+        ignored_paths: Optional[List[str]] = None,
+        already_verified_files: Optional[List[str]] = None,
     ) -> AuditResult:
         """Evaluate files changed or created during the agent run against allowed paths.
         
@@ -156,6 +191,8 @@ class GitScopeAuditor:
             project_dir: Root directory of git workspace.
             snapshot: Snapshot dictionary captured before running.
             allowed_paths: List of allowed glob patterns.
+            ignored_paths: Optional list of glob patterns owned by other concurrent nodes to ignore.
+            already_verified_files: Optional list of files legitimately modified by earlier nodes.
             
         Returns:
             AuditResult containing valid_files, unauthorized_files, and diffs.
@@ -183,10 +220,19 @@ class GitScopeAuditor:
         valid_files: List[str] = []
         unauthorized_files: List[str] = []
         diffs: List[Dict[str, str]] = []
+        ignored = ignored_paths or []
+        verified = set(already_verified_files or [])
 
         for file_path, status_code in delta_files.items():
+            if file_path in verified:
+                # File was already legitimately generated and verified by another node in this execution
+                continue
+
             if is_path_allowed(file_path, allowed_paths):
                 valid_files.append(file_path)
+            elif is_path_allowed(file_path, ignored):
+                # Ignore files modified by other concurrently executing nodes
+                continue
             else:
                 unauthorized_files.append(file_path)
                 diff_obj = self._extract_diff(project_dir, file_path, status_code)

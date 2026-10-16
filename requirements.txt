@@ -1,0 +1,19 @@
+# ==============================================================================
+# Gemini Workflow Studio - Backend & Core Requirements
+# ==============================================================================
+
+# FastAPI & ASGI Framework
+fastapi>=0.110.0
+uvicorn[standard]>=0.28.0
+pydantic>=2.6.0
+psutil>=5.9.0
+websockets>=12.0
+
+# HTTP & Network Clients
+requests>=2.31.0
+httpx>=0.27.0
+
+# Automated Integration Testing & QA
+pytest>=8.0.0
+pytest-asyncio>=0.23.0
+playwright>=1.42.0

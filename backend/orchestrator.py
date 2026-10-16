@@ -104,7 +104,11 @@ class DAGOrchestrator:
         self._running_tasks[execution_id] = task
 
     async def stop_execution(self, execution_id: str) -> bool:
-        """Emergency stop an execution session, releasing locks and terminating tasks."""
+        """Emergency stop an execution session, terminating process trees, releasing locks and cancelling tasks."""
+        # 1. Kill any running OS subprocess tree immediately
+        cli_runner.kill_execution_processes(execution_id)
+
+        # 2. Cancel running asyncio task
         task = self._running_tasks.get(execution_id)
         if task and not task.done():
             task.cancel()
@@ -192,12 +196,48 @@ class DAGOrchestrator:
         self._violations_resolved_count[execution_id] = 0
         cond = asyncio.Condition()
         self._lock_conditions[execution_id] = cond
+        completed_valid_files: Set[str] = set()
 
         # Resolve workspace directory
         workspace_dir = env_vars.get("WORKSPACE_DIR")
         if not workspace_dir:
             # Default to project root (parent directory of backend)
             workspace_dir = str(Path(__file__).resolve().parent.parent)
+
+        # Validate git repository
+        is_git_valid, git_err = self.auditor.validate_git_repository(workspace_dir)
+        if not is_git_valid:
+            await ws_hub.broadcast(execution_id, {
+                "type": "error_notification",
+                "execution_id": execution_id,
+                "timestamp": get_utc_now(),
+                "payload": {
+                    "error_code": "GIT_REPO_INVALID",
+                    "message": git_err,
+                }
+            })
+            with db_session() as conn:
+                cursor = conn.cursor()
+                cursor.execute(
+                    "UPDATE executions SET status = 'failed', end_time = ? WHERE id = ?",
+                    (get_utc_now(), execution_id)
+                )
+            await ws_hub.broadcast(execution_id, {
+                "type": "workflow_status_update",
+                "execution_id": execution_id,
+                "timestamp": get_utc_now(),
+                "payload": {
+                    "status": "failed",
+                    "summary": {
+                        "total_nodes": 0,
+                        "completed_nodes": 0,
+                        "failed_nodes": 0,
+                        "violations_resolved": 0,
+                        "duration_seconds": round(time.time() - start_ts, 2),
+                    }
+                }
+            })
+            return
 
         # Load nodes and edges from database
         with db_session() as conn:
@@ -255,7 +295,7 @@ class DAGOrchestrator:
         dag_lock = asyncio.Lock()
         has_failed = False
 
-        async def run_node_worker(node_id: str) -> None:
+        async def _run_node_worker_inner(node_id: str) -> None:
             nonlocal has_failed
             node_data = nodes[node_id]
 
@@ -402,6 +442,7 @@ class DAGOrchestrator:
                 on_log=on_terminal_log,
                 mock_mode=mock_mode,
                 simulate_violation=simulate_violation,
+                execution_id=execution_id,
             )
 
             if not success:
@@ -426,10 +467,18 @@ class DAGOrchestrator:
                 return
 
             # 5. Post-run Git Diff Audit
+            # Collect active locks from other concurrent nodes in this execution
+            other_active_locks = []
+            for active_lock in lock_manager.get_active_locks(execution_id):
+                if active_lock["node_id"] != node_id:
+                    other_active_locks.append(active_lock["path_pattern"])
+
             audit_res = self.auditor.audit_changes(
                 project_dir=workspace_dir,
                 snapshot=pre_snapshot,
-                allowed_paths=node_data["allowed_paths"]
+                allowed_paths=node_data["allowed_paths"],
+                ignored_paths=other_active_locks,
+                already_verified_files=list(completed_valid_files),
             )
 
             # Check if any unauthorized files were modified or created
@@ -512,6 +561,7 @@ class DAGOrchestrator:
 
             # 6. Node Completed Successfully
             node_states[node_id] = "completed"
+            completed_valid_files.update(audit_res.valid_files)
             self._update_node_status_in_db(execution_id, node_id, "completed", end_time=get_utc_now())
 
             # Release virtual file locks
@@ -547,19 +597,58 @@ class DAGOrchestrator:
                     in_degrees[down_id] -= 1
                     if in_degrees[down_id] == 0 and not has_failed:
                         node_tasks[down_id] = asyncio.create_task(run_node_worker(down_id))
+        async def run_node_worker(node_id: str) -> None:
+            nonlocal has_failed
+            try:
+                await _run_node_worker_inner(node_id)
+            except Exception as e:
+                has_failed = True
+                node_states[node_id] = "failed"
+                self._update_node_status_in_db(execution_id, node_id, "failed", error_message=str(e))
+                lock_manager.release_locks(execution_id, node_id)
+                async with cond:
+                    cond.notify_all()
+                await ws_hub.broadcast(execution_id, {
+                    "type": "node_status_update",
+                    "execution_id": execution_id,
+                    "timestamp": get_utc_now(),
+                    "payload": {
+                        "node_id": node_id,
+                        "previous_status": node_states.get(node_id, "running"),
+                        "current_status": "failed",
+                        "error_message": str(e),
+                    }
+                })
 
         # Launch initial root nodes (in_degree == 0)
         root_nodes = [nid for nid, deg in in_degrees.items() if deg == 0]
         for r_nid in root_nodes:
             node_tasks[r_nid] = asyncio.create_task(run_node_worker(r_nid))
 
-        # Wait until all node tasks complete
+        # Wait until all node tasks complete (with timeout safeguard)
+        wait_start = time.time()
         while True:
-            await asyncio.sleep(0.5)
+            await asyncio.sleep(0.3)
+            # Inspect background tasks for unexpected exceptions
+            for nid, t in list(node_tasks.items()):
+                if t.done() and not t.cancelled():
+                    exc = t.exception()
+                    if exc:
+                        has_failed = True
+                        node_states[nid] = "failed"
+                        self._update_node_status_in_db(execution_id, nid, "failed", error_message=str(exc))
+                        lock_manager.release_locks(execution_id, nid)
+                        async with cond:
+                            cond.notify_all()
+
             # Check if all nodes reached terminal status
             terminal_states = {"completed", "failed", "rejected", "skipped"}
             all_done = all(st in terminal_states for st in node_states.values())
             if all_done or has_failed:
+                break
+
+            if time.time() - wait_start > 120:
+                has_failed = True
                 break
 
         # If any node failed, mark pending ones as skipped

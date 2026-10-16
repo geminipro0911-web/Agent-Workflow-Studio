@@ -21,8 +21,9 @@ except ImportError:
 
 
 def normalize_pattern(pattern: str) -> str:
-    """Normalize path pattern to POSIX format and clean whitespace."""
-    return PurePath(pattern.strip()).as_posix()
+    """Normalize path pattern to POSIX format, strip quotes and clean whitespace."""
+    cleaned = pattern.strip().strip('"').strip("'").replace("\\", "/")
+    return PurePath(cleaned).as_posix()
 
 
 def patterns_conflict(pattern1: str, pattern2: str) -> bool:

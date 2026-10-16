@@ -22,7 +22,7 @@ DEFAULT_DB_PATH = DEFAULT_DB_DIR / "workflow_studio.db"
 DB_PATH = os.environ.get("DATABASE_PATH", str(DEFAULT_DB_PATH))
 
 _local = threading.local()
-_db_lock = threading.Lock()
+_db_lock = threading.RLock()
 
 
 def get_utc_now() -> str:

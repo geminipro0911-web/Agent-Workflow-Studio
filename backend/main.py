@@ -10,6 +10,7 @@ from __future__ import annotations
 import json
 import uuid
 from contextlib import asynccontextmanager
+from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from fastapi import (
@@ -446,6 +447,7 @@ def get_workflow(workflow_id: str):
                 "allowed_paths": json.loads(nr["allowed_paths"] or "[]"),
                 "read_only_paths": json.loads(nr["read_only_paths"] or "[]"),
                 "require_human_approval": bool(nr["require_human_approval"]),
+                "simulate_violation": "[SIMULATE_VIOLATION]" in (nr["task_prompt"] or ""),
             }
             for nr in node_rows
         ]
@@ -566,6 +568,18 @@ async def execute_workflow(workflow_id: str, payload: ExecuteWorkflowDTO):
         cursor.execute("SELECT id FROM workflows WHERE id = ?", (workflow_id,))
         if not cursor.fetchone():
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Workflow not found.")
+
+    # Validate target_project_dir has .git and initial commit
+    workspace_dir = (payload.environment_vars or {}).get("WORKSPACE_DIR")
+    if not workspace_dir:
+        workspace_dir = str(Path(__file__).resolve().parent.parent)
+
+    is_valid_git, git_err_msg = orchestrator.auditor.validate_git_repository(workspace_dir)
+    if not is_valid_git:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=git_err_msg
+        )
 
     execution_id = f"exec_{uuid.uuid4().hex}"
     now_iso = get_utc_now()
@@ -873,6 +887,34 @@ async def websocket_execution_endpoint(websocket: WebSocket, execution_id: str):
             "message": "WebSocket connection established successfully."
         }
     })
+
+    # Replay any existing node statuses or violations that occurred before client connected
+    try:
+        with db_session() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM execution_nodes WHERE execution_id = ?", (execution_id,))
+            for nr in cursor.fetchall():
+                if nr["status"] == "violation_paused" and nr["violation_data"]:
+                    v_data = json.loads(nr["violation_data"])
+                    cursor.execute("SELECT role_name, allowed_paths FROM nodes WHERE id = ?", (nr["node_id"],))
+                    n_info = cursor.fetchone()
+                    role_name = n_info["role_name"] if n_info else "Agent"
+                    allowed_paths = json.loads(n_info["allowed_paths"]) if n_info and n_info["allowed_paths"] else []
+                    await websocket.send_json({
+                        "type": "scope_violation_alert",
+                        "execution_id": execution_id,
+                        "timestamp": get_utc_now(),
+                        "payload": {
+                            "node_id": nr["node_id"],
+                            "role_name": role_name,
+                            "allowed_paths": allowed_paths,
+                            "unauthorized_files": v_data.get("unauthorized_files", []),
+                            "diffs": v_data.get("diffs", []),
+                            "detected_at": v_data.get("detected_at", get_utc_now()),
+                        }
+                    })
+    except Exception as e:
+        logger.warning(f"Failed to replay state on WS connect: {e}")
 
     try:
         while True:
