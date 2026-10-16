@@ -51,6 +51,23 @@ export const AppContent: React.FC = () => {
     const p = new URLSearchParams(window.location.search).get('mock_mode');
     return p === 'true';
   });
+  const [targetProjectPath, setTargetProjectPath] = useState<string>(() => {
+    return (
+      localStorage.getItem('studio_target_project_path') ||
+      new URLSearchParams(window.location.search).get('workspace_dir') ||
+      ''
+    );
+  });
+
+  const handleTargetProjectPathChange = (newPath: string) => {
+    setTargetProjectPath(newPath);
+    try {
+      localStorage.setItem('studio_target_project_path', newPath);
+    } catch {
+      // ignore
+    }
+  };
+
   const [executionId, setExecutionId] = useState<string | null>(null);
   const [terminalLogs, setTerminalLogs] = useState<TerminalLog[]>([]);
   const [isWsConnected, setIsWsConnected] = useState(false);
@@ -675,17 +692,48 @@ export const AppContent: React.FC = () => {
         console.warn('Backend save failed or in offline mode:', saveErr);
       }
 
-      // Trigger execution
-      const searchParams = new URLSearchParams(window.location.search);
-      const urlWorkspaceDir = searchParams.get('workspace_dir');
+      // Trigger execution with Target Project Path (WORKSPACE_DIR)
+      const effectiveWorkspace =
+        targetProjectPath.trim() ||
+        new URLSearchParams(window.location.search).get('workspace_dir') ||
+        '';
+
       const res = await api.executeWorkflow(wfId, {
         mock_mode: mockMode,
-        environment_vars: urlWorkspaceDir ? { WORKSPACE_DIR: urlWorkspaceDir } : undefined,
+        environment_vars: effectiveWorkspace ? { WORKSPACE_DIR: effectiveWorkspace } : undefined,
       });
       setExecutionId(res.execution_id);
       addTerminalLog('SYSTEM', 'stdout', `Execution session ${res.execution_id} accepted.`);
     } catch (err: any) {
-      console.warn('Backend execution failed, switching to realistic local client simulation:', err);
+      const errMsg = err?.message || String(err);
+      console.warn('Backend execution error:', errMsg);
+
+      // If backend returned an error (such as Git validation failure or 400 bad request)
+      if (
+        errMsg.toLowerCase().includes('git') ||
+        errMsg.toLowerCase().includes('commit') ||
+        errMsg.toLowerCase().includes('repository') ||
+        errMsg.includes('Thư mục') ||
+        errMsg.includes('400')
+      ) {
+        setIsExecuting(false);
+        addTerminalLog('SYSTEM', 'stderr', `[GIT REPOSITORY ERROR] ${errMsg}`);
+        // Reset nodes back to idle
+        setNodes((nds) =>
+          nds.map((n) => ({
+            ...n,
+            data: {
+              ...(n.data as AgentNodeData),
+              status: 'idle',
+            },
+          }))
+        );
+        alert(`❌ Không thể chạy quy trình:\n\n${errMsg}`);
+        return;
+      }
+
+      // If backend is genuinely unreachable (offline), fallback to realistic local client simulation
+      addTerminalLog('SYSTEM', 'system', `Backend unreachable, starting in-memory local client simulation.`);
       runClientSideSimulation();
     }
   };
@@ -821,6 +869,8 @@ export const AppContent: React.FC = () => {
         {/* Top Header with Theme & Language Controls */}
         <Header
           workflowName={workflowName}
+          targetProjectPath={targetProjectPath}
+          onTargetProjectPathChange={handleTargetProjectPathChange}
           isExecuting={isExecuting}
           mockMode={mockMode}
           onToggleMockMode={setMockMode}

@@ -14,6 +14,13 @@ export const translations = {
     save_workflow: 'Save',
     clear_canvas: 'Clear canvas',
     workflow_name_placeholder: 'Workflow Pipeline Name...',
+    target_project_path_label: 'Target Project Path',
+    target_project_path_placeholder: 'Target codebase (e.g. D:\\Project\\ecommerce-web)...',
+    folder_helper_tooltip: 'Target Project Path: Absolute path to the repository on your machine where Agents will execute tasks.',
+    browse_btn: 'Browse',
+    git_ready_badge: 'Git Ready',
+    git_warning_badge: 'No .git / Commit',
+    verifying_path: 'Checking...',
 
     // Node Skins
     node_skin_label: 'Node Skin',
@@ -36,6 +43,8 @@ export const translations = {
     edges_count: '{edges} Edges',
     load_template: 'Load {name}',
     sidebar_version: 'Enterprise Studio v2.0',
+    core_function_label: 'Core Function',
+    hover_instruction: 'Click or drag to add to canvas',
 
     // Canvas & Node
     drag_drop_guide_title: 'Visual Multi-Agent Canvas',
@@ -96,6 +105,18 @@ export const translations = {
     enable_violation_flag: 'Enable Violation flag during workflow execution',
     trigger_alert_btn: 'Simulate Scope Violation (Trigger Alert)',
 
+    // Inspector Guide & Recommendations
+    node_guide_title: 'Configuration Guide & Recommendations',
+    node_guide_close: 'Close Guide',
+    guide_role_name_tip: 'Enter a clear professional persona (e.g. Product Manager, Senior Backend Engineer).',
+    guide_task_prompt_tip: 'The Task Prompt is the direct command for the Agent during DAG execution. Recommended structure: 1) Input files to read ➔ 2) Detailed actions to implement ➔ 3) Specific target files ➔ 4) Acceptance criteria.',
+    guide_system_prompt_tip: 'Establish role persona, code hygiene, and strict boundary rules (e.g., Never modify files outside designated folders).',
+    guide_allowed_paths_tip: 'Glob lock patterns that restrict file writes. Modifications outside these paths immediately pause execution with a Git Auditor alert.',
+    guide_approval_tip: 'Enables an approval gate before the agent spawns, giving you a chance to verify preconditions.',
+    sample_prompt_for_role: 'Recommended Prompt Template for {role}:',
+    apply_prompt_template: 'Apply to Task Prompt',
+    applied_success: 'Applied!',
+
     // Live Terminal
     terminal_title: 'Execution Live Terminal',
     terminal_connected: 'WebSocket Live',
@@ -123,6 +144,13 @@ export const translations = {
     save_workflow: 'Lưu',
     clear_canvas: 'Xóa bảng vẽ',
     workflow_name_placeholder: 'Tên quy trình dự án...',
+    target_project_path_label: 'Thư mục dự án thực tế',
+    target_project_path_placeholder: 'Đường dẫn dự án (ví dụ: D:\\Project\\ecommerce-web)...',
+    folder_helper_tooltip: 'Thư mục dự án đích: Đường dẫn tuyệt đối đến thư mục chứa mã nguồn có sẵn .git trên máy tính.',
+    browse_btn: 'Chọn thư mục',
+    git_ready_badge: 'Git Sẵn Sàng',
+    git_warning_badge: 'Chưa có .git / Commit',
+    verifying_path: 'Đang kiểm tra...',
 
     // Node Skins
     node_skin_label: 'Chủ đề Node',
@@ -145,6 +173,8 @@ export const translations = {
     edges_count: '{edges} Edges',
     load_template: 'Tải {name}',
     sidebar_version: 'Enterprise Studio v2.0',
+    core_function_label: 'Chức năng chính',
+    hover_instruction: 'Bấm hoặc kéo thả để thêm vào giữa bảng vẽ',
 
     // Canvas & Node
     drag_drop_guide_title: 'Bảng vẽ trực quan Multi-Agent',
@@ -204,6 +234,18 @@ export const translations = {
     simulate_violation_desc: 'Thử nghiệm luồng bắt lỗi Git Auditor bằng cách bắt buộc Agent này sửa các file ngoài danh sách allowed_paths.',
     enable_violation_flag: 'Kích hoạt cờ Vi phạm khi thực thi quy trình',
     trigger_alert_btn: 'Giả lập vi phạm Git (Bật cảnh báo ngay)',
+
+    // Inspector Guide & Recommendations
+    node_guide_title: 'Hướng dẫn cấu hình & Gợi ý điền trường',
+    node_guide_close: 'Đóng hướng dẫn',
+    guide_role_name_tip: 'Nhập tên chức danh chuyên môn rõ ràng cho Agent (ví dụ: Product Manager, Senior Backend Engineer).',
+    guide_task_prompt_tip: 'Mục tiêu thực thi là mệnh lệnh trực tiếp cho Agent. Cấu trúc khuyến nghị: 1) Tài liệu/File đầu vào cần đọc ➔ 2) Yêu cầu triển khai chi tiết ➔ 3) File đích cụ thể ➔ 4) Tiêu chuẩn hoàn thành (Acceptance Criteria).',
+    guide_system_prompt_tip: 'Xác lập ranh giới trách nhiệm, quy chuẩn code và nguyên tắc bảo mật (ví dụ: Tuyệt đối không sửa file ngoài backend).',
+    guide_allowed_paths_tip: 'Danh sách mẫu khóa đường dẫn (Glob pattern) được phép sửa. Sửa file ngoài danh sách này sẽ kích hoạt tạm dừng vi phạm ngay.',
+    guide_approval_tip: 'Bật cổng duyệt thủ công nếu muốn dừng lại kiểm tra trước khi Agent bắt đầu chạy.',
+    sample_prompt_for_role: 'Mẫu Prompt gợi ý chuẩn cho {role}:',
+    apply_prompt_template: 'Áp dụng gợi ý vào ô Prompt',
+    applied_success: 'Đã áp dụng!',
 
     // Live Terminal
     terminal_title: 'Console thực thi thời gian thực',

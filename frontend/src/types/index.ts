@@ -18,6 +18,8 @@ export interface AgentPreset {
   default_system_prompt: string;
   default_allowed_paths: string[];
   default_read_only_paths: string[];
+  core_function_vi?: string;
+  core_function_en?: string;
 }
 
 export interface WorkflowTemplate {

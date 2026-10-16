@@ -17,13 +17,17 @@ import {
   Briefcase,
   Building2,
   Zap,
+  FolderGit2,
 } from 'lucide-react';
 import { useThemeLanguage } from '../../context/ThemeLanguageContext';
 import { NodeSkinTheme } from '../../types/skins';
 import { NODE_SKINS } from '../../services/skinThemes';
+import { api } from '../../services/api';
 
 interface HeaderProps {
   workflowName: string;
+  targetProjectPath: string;
+  onTargetProjectPathChange: (path: string) => void;
   isExecuting: boolean;
   mockMode: boolean;
   onToggleMockMode: (mock: boolean) => void;
@@ -37,6 +41,8 @@ interface HeaderProps {
 
 export const Header: React.FC<HeaderProps> = ({
   workflowName,
+  targetProjectPath,
+  onTargetProjectPathChange,
   isExecuting,
   mockMode,
   onToggleMockMode,
@@ -50,6 +56,62 @@ export const Header: React.FC<HeaderProps> = ({
   const { theme, toggleTheme, language, toggleLanguage, nodeSkin, setNodeSkin, t } = useThemeLanguage();
   const [skinMenuOpen, setSkinMenuOpen] = useState(false);
   const skinMenuRef = useRef<HTMLDivElement>(null);
+  const [pathValidation, setPathValidation] = useState<{ is_valid: boolean; error_message?: string | null } | null>(null);
+
+  // Validate whenever targetProjectPath changes (debounced)
+  useEffect(() => {
+    if (!targetProjectPath || !targetProjectPath.trim()) {
+      setPathValidation(null);
+      return;
+    }
+    const timer = setTimeout(async () => {
+      try {
+        const res = await api.validateWorkspace(targetProjectPath.trim());
+        setPathValidation({
+          is_valid: res.is_valid,
+          error_message: res.error_message,
+        });
+      } catch (err: any) {
+        setPathValidation({
+          is_valid: false,
+          error_message: err.message,
+        });
+      }
+    }, 450);
+    return () => clearTimeout(timer);
+  }, [targetProjectPath]);
+
+  const handleBrowseDirectory = async () => {
+    try {
+      if ('showDirectoryPicker' in window) {
+        const dirHandle = await (window as any).showDirectoryPicker();
+        if (dirHandle?.name) {
+          const current = targetProjectPath.trim();
+          if (current.includes('\\') || current.includes('/')) {
+            const sep = current.includes('\\') ? '\\' : '/';
+            const parts = current.split(/[\\/]/).filter(Boolean);
+            parts.pop();
+            const parent = parts.join(sep);
+            onTargetProjectPathChange(parent ? `${parent}${sep}${dirHandle.name}` : dirHandle.name);
+          } else {
+            onTargetProjectPathChange(dirHandle.name);
+          }
+        }
+      } else {
+        const manual = prompt('Nhập đường dẫn thư mục dự án (ví dụ: D:\\Project\\ecommerce-web):', targetProjectPath);
+        if (manual !== null) {
+          onTargetProjectPathChange(manual.trim());
+        }
+      }
+    } catch (err: any) {
+      if (err.name !== 'AbortError') {
+        const manual = prompt('Nhập đường dẫn thư mục dự án (ví dụ: D:\\Project\\ecommerce-web):', targetProjectPath);
+        if (manual !== null) {
+          onTargetProjectPathChange(manual.trim());
+        }
+      }
+    }
+  };
 
   // Close skin menu when clicking outside
   useEffect(() => {
@@ -209,6 +271,49 @@ export const Header: React.FC<HeaderProps> = ({
           >
             <span>🧪 {language === 'vi' ? 'Giả lập (Mock CLI)' : 'Mock CLI (0 Tokens)'}</span>
           </button>
+        </div>
+
+        {/* Target Project Path Input with Git Auditor Verification */}
+        <div className="flex items-center gap-1.5 bg-gray-100 dark:bg-gray-900/90 px-2.5 py-1 rounded-xl border border-gray-300 dark:border-gray-800 shadow-inner max-w-[280px] lg:max-w-[340px]">
+          <FolderGit2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+          <input
+            type="text"
+            value={targetProjectPath}
+            onChange={(e) => onTargetProjectPathChange(e.target.value)}
+            placeholder={t('target_project_path_placeholder')}
+            className="w-full text-xs bg-transparent text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-600 focus:outline-none font-mono"
+            title={t('folder_helper_tooltip')}
+          />
+          {targetProjectPath && (
+            <button
+              type="button"
+              onClick={() => onTargetProjectPathChange('')}
+              className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-xs px-1"
+              title="Clear path"
+            >
+              ✕
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={handleBrowseDirectory}
+            className="px-2 py-0.5 rounded-lg text-[10px] font-semibold bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700 shrink-0 transition"
+            title="Browse folder via OS dialog"
+          >
+            {t('browse_btn')}
+          </button>
+          {pathValidation && (
+            <span
+              className={`text-[9px] px-1.5 py-0.5 rounded-full font-bold border shrink-0 ${
+                pathValidation.is_valid
+                  ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300 border-emerald-400/40'
+                  : 'bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-300 border-rose-400/40'
+              }`}
+              title={pathValidation.error_message || 'Git repository verified'}
+            >
+              {pathValidation.is_valid ? t('git_ready_badge') : t('git_warning_badge')}
+            </span>
+          )}
         </div>
 
         {/* Test Scope Violation Button */}

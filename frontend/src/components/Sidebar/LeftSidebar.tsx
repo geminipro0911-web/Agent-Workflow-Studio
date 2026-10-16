@@ -115,7 +115,7 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
   onSelectTemplate,
   onAddAgentPreset,
 }) => {
-  const { t } = useThemeLanguage();
+  const { t, language } = useThemeLanguage();
   const [activeTab, setActiveTab] = useState<'agents' | 'templates'>('agents');
   const [expandedPresetId, setExpandedPresetId] = useState<string | null>(null);
 
@@ -171,6 +171,11 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
 
             {presets.map((preset) => {
               const isExpanded = expandedPresetId === preset.id;
+              const coreFunction =
+                language === 'vi'
+                  ? preset.core_function_vi || preset.role_name
+                  : preset.core_function_en || preset.role_name;
+
               return (
                 <div
                   key={preset.id}
@@ -178,7 +183,7 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
                   onDragStart={(e) => handleDragStart(e, preset)}
                   onClick={() => onAddAgentPreset(preset)}
                   className="group relative p-3 rounded-xl bg-gray-50 dark:bg-[#131B2A] border border-gray-200 dark:border-gray-800 hover:border-blue-500/80 hover:shadow-lg dark:hover:shadow-blue-900/30 transition-all cursor-pointer active:scale-[0.98]"
-                  title={t('click_to_add')}
+                  title={`${preset.role_name}\n• ${t('core_function_label')}: ${coreFunction}\n• ${t('hover_instruction')}`}
                 >
                   {/* Left Color Accent Bar */}
                   <div
@@ -228,8 +233,19 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
                     </div>
                   </div>
 
+                  {/* Core Function Highlights on Hover & Default */}
+                  <div className="mt-2 pl-2 pr-1 py-1.5 rounded-lg bg-blue-50/70 dark:bg-blue-950/25 border border-blue-200/60 dark:border-blue-900/40 text-[10.5px] leading-relaxed transition-all group-hover:border-blue-400/80 dark:group-hover:border-blue-700/60 group-hover:bg-blue-100/60 dark:group-hover:bg-blue-900/30">
+                    <div className="flex items-center gap-1 font-bold text-blue-700 dark:text-blue-300 text-[10px]">
+                      <Sparkles className="w-3 h-3 text-blue-500 shrink-0" />
+                      <span>{t('core_function_label')}:</span>
+                    </div>
+                    <p className="text-gray-700 dark:text-gray-300 mt-0.5 line-clamp-2 font-normal">
+                      {coreFunction}
+                    </p>
+                  </div>
+
                   {/* Allowed paths preview chips */}
-                  <div className="mt-2.5 pl-2 flex flex-wrap gap-1">
+                  <div className="mt-2 pl-2 flex flex-wrap gap-1">
                     {preset.default_allowed_paths.map((p, idx) => (
                       <span
                         key={idx}

@@ -123,6 +123,10 @@ class RejectNodeDTO(BaseModel):
     reason: str
 
 
+class WorkspaceValidateDTO(BaseModel):
+    workspace_dir: str
+
+
 # ============================================================================
 # Application Setup & Lifespan
 # ============================================================================
@@ -615,6 +619,20 @@ async def execute_workflow(workflow_id: str, payload: ExecuteWorkflowDTO):
             "mock_mode": payload.mock_mode,
         },
         "message": "Execution started."
+    }
+
+
+@app.post("/api/v1/workspace/validate", tags=["Workspace"])
+def validate_workspace(payload: WorkspaceValidateDTO):
+    """Validate whether target directory exists, has git initialized, and has an initial commit."""
+    is_valid, err_msg = orchestrator.auditor.validate_git_repository(payload.workspace_dir)
+    return {
+        "success": True,
+        "data": {
+            "workspace_dir": payload.workspace_dir,
+            "is_valid": is_valid,
+            "error_message": err_msg,
+        }
     }
 
 

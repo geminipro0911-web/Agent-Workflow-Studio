@@ -26,6 +26,10 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
       const errJson = await response.json();
       if (errJson?.error?.message) {
         errMsg = errJson.error.message;
+      } else if (errJson?.detail) {
+        errMsg = typeof errJson.detail === 'string' ? errJson.detail : JSON.stringify(errJson.detail);
+      } else if (errJson?.message) {
+        errMsg = errJson.message;
       }
     } catch {
       // Ignore
@@ -212,5 +216,13 @@ export const api = {
   async getExecutionLogs(executionId: string, nodeId?: string): Promise<TerminalLog[]> {
     const query = nodeId ? `?node_id=${encodeURIComponent(nodeId)}` : '';
     return request<TerminalLog[]>(`/executions/${executionId}/logs${query}`);
+  },
+
+  // Workspace
+  async validateWorkspace(workspaceDir: string): Promise<{ workspace_dir: string; is_valid: boolean; error_message?: string | null }> {
+    return request(`/workspace/validate`, {
+      method: 'POST',
+      body: JSON.stringify({ workspace_dir: workspaceDir }),
+    });
   },
 };

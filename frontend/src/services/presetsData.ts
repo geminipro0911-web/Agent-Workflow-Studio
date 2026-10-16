@@ -12,6 +12,8 @@ Always organize specifications logically under docs/requirements/ and ensure all
 Do NOT write application code or database migrations.`,
     default_allowed_paths: ['docs/requirements/**', 'docs/specs/**'],
     default_read_only_paths: ['README.md'],
+    core_function_vi: 'Lập PRD, viết User Stories và phân rã tiêu chí nghiệm thu (Gherkin AC).',
+    core_function_en: 'Draft PRDs, write user stories and breakdown acceptance criteria (Gherkin AC).',
   },
   {
     id: 'architect',
@@ -24,6 +26,8 @@ Document architecture decisions via ADRs (Architecture Decision Records) in docs
 Do NOT modify frontend view code or write application business logic.`,
     default_allowed_paths: ['docs/architecture/**', 'docs/api/**', 'api_spec.md'],
     default_read_only_paths: ['docs/requirements/**'],
+    core_function_vi: 'Thiết kế kiến trúc hệ thống, đặc tả API contracts (api_spec.md) và ghi nhận ADRs.',
+    core_function_en: 'Design system architecture, specify API contracts (api_spec.md) and draft ADRs.',
   },
   {
     id: 'database',
@@ -40,6 +44,8 @@ Only write within backend/migrations/ and backend/app/models/.`,
       'backend/sql/**',
     ],
     default_read_only_paths: ['docs/architecture/**', 'api_spec.md'],
+    core_function_vi: 'Thiết kế mô hình CSDL, viết migration scripts DDL, tối ưu indexing và ràng buộc khóa.',
+    core_function_en: 'Model database schemas, write DDL migration scripts, optimize indexing and integrity.',
   },
   {
     id: 'backend',
@@ -52,6 +58,8 @@ Follow Clean Architecture, implement comprehensive error handling, input validat
 Only write code in backend/app/ and backend/tests/.`,
     default_allowed_paths: ['backend/app/**', 'backend/tests/**'],
     default_read_only_paths: ['docs/api/**', 'api_spec.md', 'backend/app/models/**'],
+    core_function_vi: 'Phát triển REST/WebSocket API, business logic, validate schema Pydantic và kết nối CSDL.',
+    core_function_en: 'Implement REST/WebSocket APIs, business logic, Pydantic schemas and database access.',
   },
   {
     id: 'frontend',
@@ -64,6 +72,8 @@ Maintain strict TypeScript types matching the backend schema, build reusable ato
 Only write code in frontend/src/.`,
     default_allowed_paths: ['frontend/src/**'],
     default_read_only_paths: ['api_spec.md', 'docs/api/**'],
+    core_function_vi: 'Xây dựng giao diện React/TypeScript, quản lý state, tích hợp API và responsive design.',
+    core_function_en: 'Build React/TypeScript UI, state management, integrate backend APIs and responsive design.',
   },
   {
     id: 'qa',
@@ -76,6 +86,8 @@ Never modify source code to make tests pass; instead, record detailed defect rep
 Only write within tests/, e2e/, and docs/test_reports/.`,
     default_allowed_paths: ['tests/**', 'e2e/**', 'docs/test_reports/**'],
     default_read_only_paths: ['backend/**', 'frontend/**', 'api_spec.md'],
+    core_function_vi: 'Viết kịch bản kiểm thử tự động (Unit, E2E, Regression), phát hiện lỗi và lập test report.',
+    core_function_en: 'Write automated test suites (Unit, E2E, Regression), detect bugs and compile test reports.',
   },
   {
     id: 'security',
@@ -88,6 +100,8 @@ Generate comprehensive audit logs in docs/security_audit/ and recommend actionab
 Do NOT modify application code directly.`,
     default_allowed_paths: ['docs/security_audit/**', 'SECURITY.md'],
     default_read_only_paths: ['backend/**', 'frontend/**', 'docs/**'],
+    core_function_vi: 'Kiểm toán an ninh, rà soát OWASP Top 10, quét rò rỉ secret key và lập kế hoạch khắc phục.',
+    core_function_en: 'Audit codebase for OWASP Top 10, scan secret leaks, access control and remediation plan.',
   },
 ];
 
