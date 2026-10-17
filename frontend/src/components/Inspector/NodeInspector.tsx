@@ -11,17 +11,23 @@ import {
   Copy,
   Sparkles,
   X,
+  Code2,
+  Variable,
+  PlusCircle,
 } from 'lucide-react';
-import { Node } from '@xyflow/react';
+import { Node, Edge } from '@xyflow/react';
 import { AgentNodeData } from '../Canvas/AgentNode';
 import { IconMapper } from '../Common/IconMapper';
 import { useThemeLanguage } from '../../context/ThemeLanguageContext';
 
 interface NodeInspectorProps {
   selectedNode: Node | null;
+  allNodes?: Node[];
+  edges?: Edge[];
   onUpdateNodeData: (nodeId: string, updatedData: Partial<AgentNodeData>) => void;
   onDeleteNode: (nodeId: string) => void;
   onSimulateViolation: (nodeId: string, nodeData: AgentNodeData) => void;
+  onClose?: () => void;
 }
 
 const getRoleGuide = (presetId?: string, roleName?: string) => {
@@ -135,9 +141,12 @@ const getRoleGuide = (presetId?: string, roleName?: string) => {
 
 export const NodeInspector: React.FC<NodeInspectorProps> = ({
   selectedNode,
+  allNodes = [],
+  edges = [],
   onUpdateNodeData,
   onDeleteNode,
   onSimulateViolation,
+  onClose,
 }) => {
   const { language, t } = useThemeLanguage();
   const [newPathInput, setNewPathInput] = useState('');
@@ -163,6 +172,14 @@ export const NodeInspector: React.FC<NodeInspectorProps> = ({
   const data = selectedNode.data as AgentNodeData;
   const allowedPaths = data.allowed_paths || [];
   const guide = getRoleGuide(data.preset_id, data.role_name);
+
+  // Find upstream nodes connected to this node
+  const upstreamNodeIds = (edges || [])
+    .filter((e) => e.target === selectedNode.id || selectedNode.id.endsWith(e.target))
+    .map((e) => e.source);
+  const upstreamNodes = (allNodes || []).filter(
+    (n) => upstreamNodeIds.includes(n.id) || upstreamNodeIds.some((uid) => n.id.endsWith(uid))
+  );
 
   const handleAddPath = () => {
     const trimmed = newPathInput.trim();
@@ -211,7 +228,7 @@ export const NodeInspector: React.FC<NodeInspectorProps> = ({
           </div>
           <div className="min-w-0">
             <div className="flex items-center gap-1.5">
-              <h3 className="text-sm font-bold text-gray-900 dark:text-white truncate max-w-[130px]">
+              <h3 className="text-sm font-bold text-gray-900 dark:text-white truncate max-w-[180px]">
                 {data.role_name || 'Agent Config'}
               </h3>
 
@@ -235,14 +252,26 @@ export const NodeInspector: React.FC<NodeInspectorProps> = ({
           </div>
         </div>
 
-        <button
-          type="button"
-          onClick={() => onDeleteNode(selectedNode.id)}
-          className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-lg transition"
-          title="Delete Node from Canvas"
-        >
-          <Trash2 className="w-4 h-4" />
-        </button>
+        <div className="flex items-center gap-1">
+          <button
+            type="button"
+            onClick={() => onDeleteNode(selectedNode.id)}
+            className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-lg transition"
+            title="Delete Node from Canvas"
+          >
+            <Trash2 className="w-4 h-4" />
+          </button>
+          {onClose && (
+            <button
+              type="button"
+              onClick={onClose}
+              className="p-1.5 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition"
+              title="Close Inspector"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Inspector Form Body */}
@@ -369,6 +398,67 @@ export const NodeInspector: React.FC<NodeInspectorProps> = ({
             placeholder={t('task_prompt_placeholder')}
             className="w-full px-3 py-2 text-xs bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-800 dark:text-gray-200 focus:outline-none focus:border-blue-500 font-mono leading-relaxed resize-none"
           />
+
+          {/* Quick Context Variables from Upstream Dependencies */}
+          {upstreamNodes.length > 0 && (
+            <div className="p-2 rounded-lg bg-blue-50/60 dark:bg-blue-950/30 border border-blue-200/80 dark:border-blue-900/60 space-y-1.5 mt-1.5">
+              <div className="flex items-center gap-1 text-[10px] font-bold text-blue-700 dark:text-blue-300">
+                <Variable className="w-3 h-3 text-blue-500" />
+                <span>{t('quick_variables_title')}</span>
+              </div>
+              <div className="flex flex-wrap gap-1">
+                {upstreamNodes.map((up) => {
+                  const varKey = `{{${up.id}_output}}`;
+                  const upData = up.data as AgentNodeData;
+                  return (
+                    <button
+                      key={up.id}
+                      type="button"
+                      onClick={() => {
+                        const current = data.task_prompt || '';
+                        const updated = current ? `${current}\n\n[Context from ${upData.role_name}: ${varKey}]` : varKey;
+                        onUpdateNodeData(selectedNode.id, { task_prompt: updated });
+                      }}
+                      className="px-2 py-0.5 rounded text-[10px] font-mono font-semibold bg-white dark:bg-gray-800 hover:bg-blue-600 hover:text-white text-blue-700 dark:text-blue-300 border border-blue-300 dark:border-blue-700 shadow-xs transition flex items-center gap-1"
+                      title={`Chèn biến đầu ra của ${upData.role_name} (${varKey}) vào prompt`}
+                    >
+                      <PlusCircle className="w-2.5 h-2.5" />
+                      <span>{varKey}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Quick Instruction Snippets */}
+          <div className="space-y-1 pt-1">
+            <div className="flex items-center gap-1 text-[10px] font-bold text-gray-600 dark:text-gray-400">
+              <Code2 className="w-3 h-3 text-gray-500" />
+              <span>{t('quick_snippets_title')}</span>
+            </div>
+            <div className="flex flex-wrap gap-1">
+              {[
+                { label: language === 'vi' ? '+ Đọc file' : '+ Read file', text: language === 'vi' ? 'Đọc và phân tích cấu trúc trong file $PATH.' : 'Read and analyze architecture in $PATH.' },
+                { label: language === 'vi' ? '+ Ghi mã nguồn' : '+ Write code', text: language === 'vi' ? 'Triển khai chi tiết và ghi kết quả vào file $PATH.' : 'Implement code and write output to $PATH.' },
+                { label: language === 'vi' ? '+ Phạm vi hẹp' : '+ Strict scope', text: language === 'vi' ? 'Chỉ thực hiện trong thư mục được cấp quyền, không sửa file bên ngoài.' : 'Strictly confine modifications to allowed paths.' },
+                { label: language === 'vi' ? '+ Kiểm thử' : '+ Verify test', text: language === 'vi' ? 'Viết test suite tự động và chạy kiểm tra xác thực.' : 'Run automated tests to verify functionality.' },
+              ].map((snip, sIdx) => (
+                <button
+                  key={sIdx}
+                  type="button"
+                  onClick={() => {
+                    const current = data.task_prompt || '';
+                    const updated = current ? `${current}\n${snip.text}` : snip.text;
+                    onUpdateNodeData(selectedNode.id, { task_prompt: updated });
+                  }}
+                  className="px-2 py-0.5 rounded text-[10px] bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700 transition"
+                >
+                  {snip.label}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
 
         {/* System Prompt */}
@@ -404,13 +494,13 @@ export const NodeInspector: React.FC<NodeInspectorProps> = ({
             {allowedPaths.map((path) => (
               <span
                 key={path}
-                className="inline-flex items-center gap-1.5 text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800/60 group"
+                className="inline-flex items-center gap-1.5 text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800/60 group max-w-full"
               >
-                <span>{path}</span>
+                <span className="truncate max-w-[220px] break-all">{path}</span>
                 <button
                   type="button"
                   onClick={() => handleRemovePath(path)}
-                  className="text-emerald-600 hover:text-rose-500 dark:text-emerald-500 dark:hover:text-rose-400 transition"
+                  className="text-emerald-600 hover:text-rose-500 dark:text-emerald-500 dark:hover:text-rose-400 transition shrink-0"
                   title="Remove path"
                 >
                   &times;

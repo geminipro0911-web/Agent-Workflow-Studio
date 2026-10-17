@@ -7,21 +7,39 @@ import {
   Zap,
   ChevronDown,
   ChevronRight,
+  ChevronLeft,
   ShieldAlert,
   Wrench,
   RefreshCw,
   Database,
   Flame,
+  FolderKanban,
+  FolderOpen,
+  Trash2,
+  Search,
+  X,
+  Clock,
+  Download,
+  FolderPlus,
 } from 'lucide-react';
-import { AgentPreset, WorkflowTemplate } from '../../types';
+import { AgentPreset, WorkflowTemplate, Workflow } from '../../types';
 import { IconMapper } from '../Common/IconMapper';
 import { useThemeLanguage } from '../../context/ThemeLanguageContext';
 
 interface LeftSidebarProps {
   presets: AgentPreset[];
   templates: WorkflowTemplate[];
+  myWorkflows?: Workflow[];
+  currentWorkflowId?: string | null;
   onSelectTemplate: (templateId: string) => void;
   onAddAgentPreset: (preset: AgentPreset) => void;
+  onSelectWorkflow?: (workflowId: string) => void;
+  onDeleteWorkflow?: (workflowId: string) => void;
+  onRefreshWorkflows?: () => void;
+  onCreateNewWorkflow?: () => void;
+  onSaveCurrentWorkflow?: () => void;
+  isCollapsed?: boolean;
+  onToggleCollapse?: () => void;
 }
 
 const getTemplateMeta = (id: string) => {
@@ -112,56 +130,228 @@ const getTemplateMeta = (id: string) => {
 export const LeftSidebar: React.FC<LeftSidebarProps> = ({
   presets,
   templates,
+  myWorkflows = [],
+  currentWorkflowId = null,
   onSelectTemplate,
   onAddAgentPreset,
+  onSelectWorkflow,
+  onDeleteWorkflow,
+  onRefreshWorkflows,
+  onCreateNewWorkflow,
+  onSaveCurrentWorkflow,
+  isCollapsed = false,
+  onToggleCollapse,
 }) => {
   const { t, language } = useThemeLanguage();
-  const [activeTab, setActiveTab] = useState<'agents' | 'templates'>('agents');
+  const [activeTab, setActiveTab] = useState<'agents' | 'templates' | 'my_workflows'>('agents');
   const [expandedPresetId, setExpandedPresetId] = useState<string | null>(null);
+  const [expandedWorkflowId, setExpandedWorkflowId] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const handleDragStart = (e: React.DragEvent, preset: AgentPreset) => {
     e.dataTransfer.setData('application/agent-preset', JSON.stringify(preset));
     e.dataTransfer.effectAllowed = 'move';
   };
 
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    if (onRefreshWorkflows) {
+      await onRefreshWorkflows();
+    }
+    setTimeout(() => setIsRefreshing(false), 500);
+  };
+
+  const handleExportWorkflowJson = (wf: Workflow) => {
+    const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(wf, null, 2));
+    const downloadAnchor = document.createElement('a');
+    downloadAnchor.setAttribute('href', dataStr);
+    downloadAnchor.setAttribute('download', `${(wf.name || 'workflow').toLowerCase().replace(/\s+/g, '_')}.json`);
+    document.body.appendChild(downloadAnchor);
+    downloadAnchor.click();
+    downloadAnchor.remove();
+  };
+
+  const filteredWorkflows = myWorkflows.filter((w) => {
+    if (!searchQuery.trim()) return true;
+    const q = searchQuery.toLowerCase();
+    return (
+      (w.name && w.name.toLowerCase().includes(q)) ||
+      (w.description && w.description.toLowerCase().includes(q)) ||
+      (w.id && w.id.toLowerCase().includes(q))
+    );
+  });
+
+  if (isCollapsed) {
+    return (
+      <aside className="w-14 h-full bg-white dark:bg-[#0D131F] border-r border-gray-200 dark:border-gray-800 flex flex-col items-center py-3 z-20 shrink-0 select-none shadow-md transition-all duration-200">
+        <button
+          type="button"
+          onClick={onToggleCollapse}
+          className="p-2 rounded-xl text-gray-500 hover:text-blue-600 hover:bg-gray-100 dark:hover:bg-gray-800 transition mb-2"
+          title={t('expand_panel')}
+        >
+          <ChevronRight className="w-5 h-5" />
+        </button>
+
+        {/* Quick Tab Switcher Icons */}
+        <div className="flex flex-col items-center gap-1.5 mb-2">
+          <button
+            type="button"
+            onClick={() => {
+              setActiveTab('agents');
+              onToggleCollapse?.();
+            }}
+            className={`p-2 rounded-xl transition ${
+              activeTab === 'agents'
+                ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30'
+                : 'text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800'
+            }`}
+            title={t('agent_library')}
+          >
+            <Sparkles className="w-4 h-4" />
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              setActiveTab('templates');
+              onToggleCollapse?.();
+            }}
+            className={`p-2 rounded-xl transition ${
+              activeTab === 'templates'
+                ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30'
+                : 'text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800'
+            }`}
+            title={t('workflow_templates', { count: templates.length })}
+          >
+            <Layers className="w-4 h-4" />
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              setActiveTab('my_workflows');
+              onToggleCollapse?.();
+            }}
+            className={`relative p-2 rounded-xl transition ${
+              activeTab === 'my_workflows'
+                ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30'
+                : 'text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800'
+            }`}
+            title={t('my_workflows_title')}
+          >
+            <FolderKanban className="w-4 h-4" />
+            {myWorkflows.length > 0 && (
+              <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 bg-blue-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center">
+                {myWorkflows.length}
+              </span>
+            )}
+          </button>
+        </div>
+
+        <div className="w-8 h-px bg-gray-200 dark:bg-gray-800 my-1" />
+
+        <div className="flex-1 flex flex-col items-center gap-2 overflow-y-auto py-2 scrollbar-none">
+          {presets.map((preset) => (
+            <div
+              key={preset.id}
+              draggable
+              onDragStart={(e) => handleDragStart(e, preset)}
+              onClick={() => onAddAgentPreset(preset)}
+              className="p-2 rounded-xl hover:scale-110 cursor-pointer transition shadow-xs border"
+              style={{
+                backgroundColor: `${preset.color_theme}15`,
+                borderColor: `${preset.color_theme}40`,
+                color: preset.color_theme,
+              }}
+              title={`${preset.role_name} - ${language === 'vi' ? 'Bấm hoặc kéo thả để thêm vào canvas' : 'Click or drag to add'}`}
+            >
+              <IconMapper name={preset.icon} className="w-4 h-4" />
+            </div>
+          ))}
+        </div>
+      </aside>
+    );
+  }
+
   return (
     <aside className="w-80 h-full bg-white dark:bg-[#0D131F] border-r border-gray-200 dark:border-gray-800 flex flex-col z-20 shrink-0 select-none shadow-lg dark:shadow-2xl transition-colors duration-200">
-      {/* Sidebar Header Tabs */}
-      <div className="p-3 border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-[#111827]">
-        <div className="flex bg-gray-200 dark:bg-gray-900/90 p-1 rounded-xl border border-gray-300 dark:border-gray-800">
+      {/* Sidebar Header Tabs: 3 Tabs (Agents, Templates, My Workflows) */}
+      <div className="p-2.5 border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-[#111827] flex items-center gap-1.5">
+        <div className="flex-1 grid grid-cols-3 bg-gray-200 dark:bg-gray-900/90 p-1 rounded-xl border border-gray-300 dark:border-gray-800 gap-1 text-[11px]">
           <button
             type="button"
             onClick={() => setActiveTab('agents')}
-            className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-semibold transition ${
+            className={`flex items-center justify-center gap-1 py-1.5 px-1 rounded-lg font-semibold transition truncate ${
               activeTab === 'agents'
                 ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30'
                 : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-300/60 dark:hover:bg-gray-800'
             }`}
+            title={t('agent_library')}
           >
-            <Sparkles className="w-3.5 h-3.5" />
-            <span>{t('agent_library')}</span>
+            <Sparkles className="w-3.5 h-3.5 shrink-0" />
+            <span className="truncate">{language === 'vi' ? 'Thư viện' : 'Agents'}</span>
           </button>
 
           <button
             type="button"
             onClick={() => setActiveTab('templates')}
-            className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-semibold transition ${
+            className={`flex items-center justify-center gap-1 py-1.5 px-1 rounded-lg font-semibold transition truncate ${
               activeTab === 'templates'
                 ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30'
                 : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-300/60 dark:hover:bg-gray-800'
             }`}
+            title={t('workflow_templates', { count: templates.length })}
           >
-            <Layers className="w-3.5 h-3.5" />
-            <span>{t('workflow_templates', { count: templates.length })}</span>
+            <Layers className="w-3.5 h-3.5 shrink-0" />
+            <span className="truncate">{language === 'vi' ? 'Mẫu' : 'Templates'}</span>
+            <span className={`text-[10px] px-1 py-0.2 rounded-full font-bold ${
+              activeTab === 'templates' ? 'bg-white/20' : 'bg-gray-300 dark:bg-gray-800 text-gray-700 dark:text-gray-300'
+            }`}>
+              {templates.length}
+            </span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab('my_workflows')}
+            className={`flex items-center justify-center gap-1 py-1.5 px-1 rounded-lg font-semibold transition truncate ${
+              activeTab === 'my_workflows'
+                ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30'
+                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-300/60 dark:hover:bg-gray-800'
+            }`}
+            title={t('my_workflows', { count: myWorkflows.length })}
+          >
+            <FolderKanban className="w-3.5 h-3.5 shrink-0" />
+            <span className="truncate">{language === 'vi' ? 'Của tôi' : 'Saved'}</span>
+            {myWorkflows.length > 0 && (
+              <span className={`text-[10px] px-1 py-0.2 rounded-full font-bold ${
+                activeTab === 'my_workflows' ? 'bg-white/20' : 'bg-blue-500/20 text-blue-500 dark:text-blue-400'
+              }`}>
+                {myWorkflows.length}
+              </span>
+            )}
           </button>
         </div>
+
+        {onToggleCollapse && (
+          <button
+            type="button"
+            onClick={onToggleCollapse}
+            className="p-1.5 rounded-xl text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-800 transition shrink-0"
+            title={t('collapse_panel')}
+          >
+            <ChevronLeft className="w-4 h-4" />
+          </button>
+        )}
       </div>
 
       {/* Content Area */}
       <div className="flex-1 overflow-y-auto p-3 space-y-3 scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-800">
         {activeTab === 'agents' ? (
           /* ======================================================== */
-          /* 7 ENTERPRISE AGENT PRESETS (DRAG & DROP) */
+          /* 1. ENTERPRISE AGENT PRESETS (DRAG & DROP) */
           /* ======================================================== */
           <div className="space-y-2.5">
             <div className="px-1 text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 flex items-center justify-between">
@@ -285,9 +475,9 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
               );
             })}
           </div>
-        ) : (
+        ) : activeTab === 'templates' ? (
           /* ======================================================== */
-          /* 7 WORKFLOW TEMPLATES (1-CLICK CREATION) */
+          /* 2. WORKFLOW TEMPLATES (1-CLICK CREATION) */
           /* ======================================================== */
           <div className="space-y-3">
             <div className="px-1 text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">
@@ -344,6 +534,250 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
                 </div>
               );
             })}
+          </div>
+        ) : (
+          /* ======================================================== */
+          /* 3. MY WORKFLOWS (SAVED WORKFLOWS LIST & REUSE) */
+          /* ======================================================== */
+          <div className="space-y-3">
+            {/* Action Bar: Search, Refresh, New */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between gap-1.5 px-0.5">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                  {t('my_workflows_title')}
+                </span>
+                <div className="flex items-center gap-1">
+                  {onCreateNewWorkflow && (
+                    <button
+                      type="button"
+                      onClick={onCreateNewWorkflow}
+                      className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-semibold bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-800/40 border border-blue-200 dark:border-blue-700/50 transition"
+                      title={t('new_blank_workflow')}
+                    >
+                      <Plus className="w-3 h-3" />
+                      <span>{language === 'vi' ? 'Tạo mới' : 'New'}</span>
+                    </button>
+                  )}
+                  {onRefreshWorkflows && (
+                    <button
+                      type="button"
+                      onClick={handleRefresh}
+                      className="p-1 rounded-lg text-gray-500 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-800 transition"
+                      title={t('refresh_workflows')}
+                    >
+                      <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin text-blue-500' : ''}`} />
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Search Bar */}
+              <div className="relative flex items-center">
+                <Search className="w-3.5 h-3.5 text-gray-400 absolute left-2.5 pointer-events-none" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder={t('search_workflows_placeholder')}
+                  className="w-full pl-8 pr-7 py-1.5 rounded-lg text-xs bg-gray-50 dark:bg-[#131B2A] border border-gray-200 dark:border-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/30 transition"
+                />
+                {searchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => setSearchQuery('')}
+                    className="absolute right-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* List or Empty State */}
+            {filteredWorkflows.length === 0 ? (
+              <div className="p-6 text-center rounded-xl bg-gray-50 dark:bg-[#131B2A] border border-dashed border-gray-300 dark:border-gray-800">
+                <div className="w-10 h-10 mx-auto rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 flex items-center justify-center mb-2.5">
+                  <FolderPlus className="w-5 h-5" />
+                </div>
+                <h5 className="font-semibold text-xs text-gray-800 dark:text-gray-200 mb-1">
+                  {searchQuery
+                    ? language === 'vi' ? 'Không tìm thấy quy trình' : 'No matching workflows'
+                    : t('no_saved_workflows')}
+                </h5>
+                <p className="text-[11px] text-gray-500 dark:text-gray-400 leading-relaxed mb-3">
+                  {searchQuery
+                    ? language === 'vi' ? 'Thử tìm kiếm với từ khóa khác.' : 'Try a different search query.'
+                    : t('no_saved_workflows_sub')}
+                </p>
+                {!searchQuery && onSaveCurrentWorkflow && (
+                  <button
+                    type="button"
+                    onClick={onSaveCurrentWorkflow}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-blue-600 hover:bg-blue-500 text-white shadow-sm shadow-blue-600/30 transition"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>{t('save_current_to_list')}</span>
+                  </button>
+                )}
+              </div>
+            ) : (
+              <div className="space-y-2.5">
+                {filteredWorkflows.map((wf) => {
+                  const isActive = wf.id === currentWorkflowId;
+                  const isExpanded = expandedWorkflowId === wf.id;
+                  const nodesCount = wf.nodes_count ?? wf.nodes?.length ?? 0;
+                  const edgesCount = wf.edges_count ?? wf.edges?.length ?? 0;
+                  const dateStr = wf.updated_at || wf.created_at;
+                  let formattedDate = '';
+                  if (dateStr) {
+                    try {
+                      formattedDate = new Date(dateStr).toLocaleDateString(language === 'vi' ? 'vi-VN' : 'en-US', {
+                        month: 'short',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      });
+                    } catch {
+                      formattedDate = dateStr;
+                    }
+                  }
+
+                  return (
+                    <div
+                      key={wf.id}
+                      className={`group p-3 rounded-xl border transition-all ${
+                        isActive
+                          ? 'bg-blue-50/60 dark:bg-gradient-to-b dark:from-[#182338] dark:to-[#121A2C] border-blue-400 dark:border-blue-500/60 shadow-md dark:shadow-lg dark:shadow-blue-900/30'
+                          : 'bg-gray-50 dark:bg-[#131B2A] border-gray-200 dark:border-gray-800 hover:border-blue-400 dark:hover:border-blue-700/60 hover:shadow-md'
+                      }`}
+                    >
+                      {/* Card Header */}
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <div
+                            className={`p-2 rounded-lg shrink-0 ${
+                              isActive
+                                ? 'bg-blue-600 text-white'
+                                : 'bg-gray-200 dark:bg-gray-800 text-blue-600 dark:text-blue-400'
+                            }`}
+                          >
+                            <FolderKanban className="w-4 h-4" />
+                          </div>
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <h4 className="font-bold text-xs text-gray-900 dark:text-white truncate max-w-[170px]" title={wf.name}>
+                                {wf.name}
+                              </h4>
+                              {isActive && (
+                                <span className="text-[9px] font-semibold px-1.5 py-0.2 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-950/70 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700/60 flex items-center gap-1">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                                  {t('workflow_active_badge')}
+                                </span>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-1.5 text-[10px] text-gray-500 dark:text-gray-400 font-mono mt-0.5">
+                              <span>{nodesCount} agents • {edgesCount} edges</span>
+                              {formattedDate && (
+                                <>
+                                  <span>•</span>
+                                  <span className="flex items-center gap-0.5">
+                                    <Clock className="w-2.5 h-2.5" />
+                                    {formattedDate}
+                                  </span>
+                                </>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Description if present */}
+                      {wf.description && (
+                        <p className="text-[11px] text-gray-600 dark:text-gray-400 mt-2 line-clamp-2 leading-relaxed">
+                          {wf.description}
+                        </p>
+                      )}
+
+                      {/* Expand details for nodes if loaded */}
+                      {wf.nodes && wf.nodes.length > 0 && (
+                        <div className="mt-2 pt-1 border-t border-gray-200 dark:border-gray-800/60">
+                          <button
+                            type="button"
+                            onClick={() => setExpandedWorkflowId(isExpanded ? null : wf.id)}
+                            className="flex items-center gap-1 text-[10px] text-gray-500 hover:text-gray-800 dark:hover:text-gray-300"
+                          >
+                            {isExpanded ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
+                            <span>{isExpanded ? t('hide_nodes_detail') : t('view_nodes_detail', { count: wf.nodes.length })}</span>
+                          </button>
+
+                          {isExpanded && (
+                            <div className="mt-2 space-y-1 pl-1 max-h-36 overflow-y-auto scrollbar-thin">
+                              {wf.nodes.map((node, nIdx) => (
+                                <div
+                                  key={node.id || nIdx}
+                                  className="flex items-center gap-1.5 p-1 rounded bg-gray-200/50 dark:bg-gray-900/60 text-[10px]"
+                                >
+                                  <div
+                                    className="w-2 h-2 rounded-full"
+                                    style={{ backgroundColor: node.color_theme || '#3b82f6' }}
+                                  />
+                                  <span className="font-semibold text-gray-800 dark:text-gray-200 truncate">
+                                    {node.role_name}
+                                  </span>
+                                  {node.allowed_paths && node.allowed_paths.length > 0 && (
+                                    <span className="text-[9px] font-mono text-gray-500 ml-auto truncate max-w-[120px]">
+                                      {node.allowed_paths[0]}
+                                    </span>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Action Buttons: Open, Export, Delete */}
+                      <div className="mt-3 flex items-center gap-1.5 pt-2 border-t border-gray-200/80 dark:border-gray-800/80">
+                        {onSelectWorkflow && (
+                          <button
+                            type="button"
+                            onClick={() => onSelectWorkflow(wf.id)}
+                            className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 px-2.5 rounded-lg text-xs font-semibold transition ${
+                              isActive
+                                ? 'bg-blue-600/10 text-blue-600 dark:text-blue-300 border border-blue-400/40 hover:bg-blue-600 hover:text-white'
+                                : 'bg-blue-600 hover:bg-blue-500 text-white shadow-xs shadow-blue-600/30'
+                            }`}
+                          >
+                            <FolderOpen className="w-3.5 h-3.5" />
+                            <span>{t('load_workflow')}</span>
+                          </button>
+                        )}
+
+                        <button
+                          type="button"
+                          onClick={() => handleExportWorkflowJson(wf)}
+                          className="p-1.5 rounded-lg bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300 transition"
+                          title={t('export_json_tooltip')}
+                        >
+                          <Download className="w-3.5 h-3.5" />
+                        </button>
+
+                        {onDeleteWorkflow && (
+                          <button
+                            type="button"
+                            onClick={() => onDeleteWorkflow(wf.id)}
+                            className="p-1.5 rounded-lg bg-gray-200 dark:bg-gray-800 hover:bg-rose-500 hover:text-white text-gray-600 dark:text-gray-400 transition"
+                            title={t('delete_workflow')}
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         )}
       </div>

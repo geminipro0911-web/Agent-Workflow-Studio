@@ -13,21 +13,44 @@ import { LeftSidebar } from './components/Sidebar/LeftSidebar';
 import { Header } from './components/Header/Header';
 import { FlowCanvas } from './components/Canvas/FlowCanvas';
 import { NodeInspector } from './components/Inspector/NodeInspector';
-import { LiveTerminal } from './components/Terminal/LiveTerminal';
+import { LiveTerminal, TerminalHeightMode } from './components/Terminal/LiveTerminal';
 import { GitViolationModal } from './components/ViolationModal/GitViolationModal';
+import { HumanApprovalModal } from './components/ApprovalModal/HumanApprovalModal';
+import { ExecutionProgressBar } from './components/Canvas/ExecutionProgressBar';
 import { AgentNodeData } from './components/Canvas/AgentNode';
 
 import {
   AgentPreset,
   WorkflowTemplate,
+  Workflow,
   ViolationData,
   TerminalLog,
   NodeExecutionStatus,
+  ApprovalRequestedPayload,
 } from './types';
 import { api } from './services/api';
 import { wsClient } from './services/websocket';
 import { ENTERPRISE_AGENT_PRESETS, WORKFLOW_TEMPLATES_DATA } from './services/presetsData';
 import { ThemeLanguageProvider, useThemeLanguage } from './context/ThemeLanguageContext';
+
+const LOCAL_STORAGE_SAVED_WORKFLOWS = 'multi_agent_builder_saved_workflows';
+
+const loadSavedWorkflowsFromStorage = (): Workflow[] => {
+  try {
+    const raw = localStorage.getItem(LOCAL_STORAGE_SAVED_WORKFLOWS);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+};
+
+const saveWorkflowsToStorage = (list: Workflow[]) => {
+  try {
+    localStorage.setItem(LOCAL_STORAGE_SAVED_WORKFLOWS, JSON.stringify(list));
+  } catch (err) {
+    console.warn('Failed to save workflows to localStorage:', err);
+  }
+};
 
 export const AppContent: React.FC = () => {
   const { t } = useThemeLanguage();
@@ -35,6 +58,7 @@ export const AppContent: React.FC = () => {
   // Master lists
   const [presets, setPresets] = useState<AgentPreset[]>(ENTERPRISE_AGENT_PRESETS);
   const [templates, setTemplates] = useState<WorkflowTemplate[]>(WORKFLOW_TEMPLATES_DATA);
+  const [myWorkflows, setMyWorkflows] = useState<Workflow[]>([]);
 
   // Workflow meta
   const [workflowId, setWorkflowId] = useState<string>('wf_default');
@@ -71,12 +95,23 @@ export const AppContent: React.FC = () => {
   const [executionId, setExecutionId] = useState<string | null>(null);
   const [terminalLogs, setTerminalLogs] = useState<TerminalLog[]>([]);
   const [isWsConnected, setIsWsConnected] = useState(false);
-  const terminalHeight = 240;
+  
+  // Resizable terminal height mode ('minimized': 38px, 'normal': 240px, 'expanded': 420px)
+  const [terminalHeightMode, setTerminalHeightMode] = useState<TerminalHeightMode>('normal');
+  const terminalHeight = terminalHeightMode === 'minimized' ? 38 : terminalHeightMode === 'expanded' ? 420 : 240;
+
+  // Sidebar collapse state
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
   // Violation Alert Modal state
   const [violationModalOpen, setViolationModalOpen] = useState(false);
   const [currentViolation, setCurrentViolation] = useState<ViolationData | null>(null);
   const [isResolvingViolation, setIsResolvingViolation] = useState(false);
+
+  // Pre-Execution Human Approval Gate Modal state
+  const [approvalModalOpen, setApprovalModalOpen] = useState(false);
+  const [currentApproval, setCurrentApproval] = useState<ApprovalRequestedPayload | null>(null);
+  const [isResolvingApproval, setIsResolvingApproval] = useState(false);
 
   // Helper: updates a node's visual execution status
   const updateNodeExecutionStatus = useCallback(
@@ -190,6 +225,138 @@ export const AppContent: React.FC = () => {
     [templates, setNodes, setEdges, addTerminalLog]
   );
 
+  // Fetch list of saved workflows from backend API and local storage
+  const fetchMyWorkflows = useCallback(async () => {
+    let apiList: Workflow[] = [];
+    try {
+      apiList = await api.listWorkflows();
+    } catch (err) {
+      console.warn('API listWorkflows failed:', err);
+    }
+
+    const localList = loadSavedWorkflowsFromStorage();
+    const map = new Map<string, Workflow>();
+    // First, register local list
+    localList.forEach((w) => map.set(w.id, w));
+    // Then merge API list
+    apiList.forEach((w) => {
+      const existing = map.get(w.id);
+      map.set(w.id, {
+        ...existing,
+        ...w,
+        nodes: w.nodes || existing?.nodes,
+        edges: w.edges || existing?.edges,
+      });
+    });
+
+    const merged = Array.from(map.values());
+    setMyWorkflows(merged);
+    saveWorkflowsToStorage(merged);
+  }, []);
+
+  // Load a saved workflow onto the canvas
+  const handleSelectSavedWorkflow = useCallback(
+    async (wfId: string) => {
+      try {
+        let wf: Workflow | null = null;
+        try {
+          wf = await api.getWorkflow(wfId);
+        } catch {
+          wf = myWorkflows.find((w) => w.id === wfId) || null;
+        }
+
+        if (!wf) {
+          const locals = loadSavedWorkflowsFromStorage();
+          wf = locals.find((w) => w.id === wfId) || null;
+        }
+
+        if (wf) {
+          setWorkflowName(wf.name || 'Saved Workflow');
+          setWorkflowId(wf.id);
+
+          const newNodes: Node[] = (wf.nodes || []).map((n) => ({
+            id: n.id,
+            type: 'agentNode',
+            position: { x: n.position_x, y: n.position_y },
+            data: {
+              ...n,
+              status: 'idle',
+              violation_data: null,
+              error_message: null,
+            } as AgentNodeData,
+          }));
+
+          const newEdges: Edge[] = (wf.edges || []).map((e: any) => ({
+            id: e.id,
+            source: e.source_node_id || e.source,
+            target: e.target_node_id || e.target,
+            animated: true,
+            style: { stroke: '#3B82F6', strokeWidth: 2 },
+          }));
+
+          setNodes(newNodes);
+          setEdges(newEdges);
+          setSelectedNodeId(newNodes[0]?.id || null);
+          addTerminalLog('SYSTEM', 'system', `Loaded saved workflow: '${wf.name}' (${newNodes.length} agents)`);
+
+          if ((window as any).__fitView) {
+            setTimeout(() => {
+              (window as any).__fitView();
+            }, 150);
+          }
+        }
+      } catch (err: any) {
+        console.error('Failed to load saved workflow:', err);
+        alert(`Không thể tải quy trình: ${err?.message || err}`);
+      }
+    },
+    [myWorkflows, setNodes, setEdges, addTerminalLog]
+  );
+
+  // Delete a saved workflow
+  const handleDeleteSavedWorkflow = useCallback(
+    async (wfId: string) => {
+      const target = myWorkflows.find((w) => w.id === wfId);
+      const name = target?.name || wfId;
+      if (!confirm(t('confirm_delete_workflow', { name }))) return;
+
+      try {
+        try {
+          await api.deleteWorkflow(wfId);
+        } catch (apiErr) {
+          console.warn('API delete failed, proceeding with local delete:', apiErr);
+        }
+
+        const updated = loadSavedWorkflowsFromStorage().filter((w) => w.id !== wfId);
+        saveWorkflowsToStorage(updated);
+        setMyWorkflows((prev) => prev.filter((w) => w.id !== wfId));
+
+        if (workflowId === wfId) {
+          setWorkflowId(`wf_${Date.now()}`);
+        }
+        addTerminalLog('SYSTEM', 'stdout', `Đã xóa quy trình: ${name}`);
+      } catch (err: any) {
+        alert(`Lỗi khi xóa quy trình: ${err?.message || err}`);
+      }
+    },
+    [myWorkflows, workflowId, t, addTerminalLog]
+  );
+
+  // Create a new blank workflow
+  const handleCreateNewWorkflow = useCallback(() => {
+    if (nodes.length > 0) {
+      if (!confirm(t('confirm_clear_canvas'))) return;
+    }
+    const newId = `wf_${Date.now()}`;
+    setWorkflowId(newId);
+    setWorkflowName(t('new_blank_workflow'));
+    setNodes([]);
+    setEdges([]);
+    setSelectedNodeId(null);
+    setTerminalLogs([]);
+    addTerminalLog('SYSTEM', 'system', 'Đã khởi tạo sơ đồ quy trình mới.');
+  }, [nodes.length, t, setNodes, setEdges, addTerminalLog]);
+
   const initRanRef = useRef(false);
 
   // Initialize presets, templates, and load pipeline (requested via query param or default SDLC)
@@ -205,6 +372,7 @@ export const AppContent: React.FC = () => {
         ]);
         if (loadedPresets?.length) setPresets(loadedPresets);
         if (loadedTemplates?.length) setTemplates(loadedTemplates);
+        await fetchMyWorkflows();
       } catch (err) {
         console.warn('Using built-in presets and templates:', err);
       }
@@ -305,7 +473,15 @@ export const AppContent: React.FC = () => {
 
     // Approval requested listener
     const unsubApproval = wsClient.on('approval_requested', (env) => {
-      const { node_id, role_name, task_prompt } = env.payload;
+      const { node_id, role_name, task_prompt, allowed_paths } = env.payload;
+      setCurrentApproval({
+        node_id,
+        role_name: role_name || 'Agent',
+        task_prompt: task_prompt || '',
+        allowed_paths: allowed_paths || [],
+      });
+      setApprovalModalOpen(true);
+      updateNodeExecutionStatus(node_id, 'waiting_approval', 'Waiting for human sign-off');
       addTerminalLog(node_id, 'system', `[APPROVAL GATE] Node '${role_name}' (${node_id}) requested approval to proceed: "${task_prompt}"`);
     });
 
@@ -339,6 +515,18 @@ export const AppContent: React.FC = () => {
                 detected_at: n.violation_data.detected_at || new Date().toISOString(),
               };
               handleIncomingViolationAlert(vData);
+              break;
+            }
+            if (n.status === 'waiting_approval' && !approvalModalOpen) {
+              const matchingNode = nodes.find((x) => x.id === n.node_id || n.node_id.endsWith(x.id));
+              const nodeData = matchingNode?.data as AgentNodeData | undefined;
+              setCurrentApproval({
+                node_id: n.node_id,
+                role_name: nodeData?.role_name || n.role_name || 'Agent',
+                task_prompt: nodeData?.task_prompt || '',
+                allowed_paths: nodeData?.allowed_paths || [],
+              });
+              setApprovalModalOpen(true);
               break;
             }
           }
@@ -563,6 +751,55 @@ export const AppContent: React.FC = () => {
   };
 
   // ========================================================
+  // PRE-EXECUTION HUMAN APPROVAL GATE ACTIONS
+  // ========================================================
+  const handleApproveNode = async (nodeId: string, comment?: string) => {
+    setIsResolvingApproval(true);
+    try {
+      if (executionId) {
+        await api.approveNode(executionId, nodeId, {
+          approved_by: 'Tech Lead / User',
+          comment,
+        });
+      }
+      updateNodeExecutionStatus(nodeId, 'running', null, null);
+      addTerminalLog(nodeId, 'stdout', `[APPROVAL GATE] Node ${nodeId} APPROVED by Tech Lead. Execution authorized.`);
+      setApprovalModalOpen(false);
+      setCurrentApproval(null);
+    } catch (err: any) {
+      console.warn('Approve node error:', err);
+      updateNodeExecutionStatus(nodeId, 'running', null, null);
+      setApprovalModalOpen(false);
+      setCurrentApproval(null);
+    } finally {
+      setIsResolvingApproval(false);
+    }
+  };
+
+  const handleRejectNode = async (nodeId: string, reason?: string) => {
+    setIsResolvingApproval(true);
+    try {
+      if (executionId) {
+        await api.rejectNode(executionId, nodeId, {
+          rejected_by: 'Tech Lead / User',
+          reason: reason || 'Rejected by human operator',
+        });
+      }
+      updateNodeExecutionStatus(nodeId, 'rejected', reason || 'Node rejected by user', null);
+      addTerminalLog(nodeId, 'stderr', `[APPROVAL GATE] Node ${nodeId} REJECTED by Tech Lead. Downstream nodes skipped.`);
+      setApprovalModalOpen(false);
+      setCurrentApproval(null);
+    } catch (err: any) {
+      console.warn('Reject node error:', err);
+      updateNodeExecutionStatus(nodeId, 'rejected', reason || 'Node rejected by user', null);
+      setApprovalModalOpen(false);
+      setCurrentApproval(null);
+    } finally {
+      setIsResolvingApproval(false);
+    }
+  };
+
+  // ========================================================
   // SIMULATE SCOPE VIOLATION TEST GENERATOR
   // ========================================================
   const triggerSimulatedScopeViolation = (targetNodeId: string, nodeData?: AgentNodeData) => {
@@ -687,6 +924,29 @@ export const AppContent: React.FC = () => {
           const createdWf = await api.createWorkflow(payload);
           wfId = createdWf.id;
           setWorkflowId(wfId);
+          if (createdWf.nodes && createdWf.nodes.length > 0) {
+            const idMap: Record<string, string> = {};
+            createdWf.nodes.forEach((cn: any, idx: number) => {
+              if (payload.nodes[idx] && payload.nodes[idx].id !== cn.id) {
+                idMap[payload.nodes[idx].id] = cn.id;
+              }
+            });
+            if (Object.keys(idMap).length > 0) {
+              setNodes((prev) =>
+                prev.map((node) => ({
+                  ...node,
+                  id: idMap[node.id] || node.id,
+                }))
+              );
+              setEdges((prev) =>
+                prev.map((edge) => ({
+                  ...edge,
+                  source: idMap[edge.source] || edge.source,
+                  target: idMap[edge.target] || edge.target,
+                }))
+              );
+            }
+          }
         }
       } catch (saveErr) {
         console.warn('Backend save failed or in offline mode:', saveErr);
@@ -836,7 +1096,46 @@ export const AppContent: React.FC = () => {
           condition: 'success',
         })),
       };
-      await api.createWorkflow(payload);
+
+      let savedId = workflowId;
+      try {
+        if (workflowId && !workflowId.startsWith('wf_local_')) {
+          await api.updateWorkflow(workflowId, payload);
+        } else {
+          const created = await api.createWorkflow(payload);
+          savedId = created.id;
+          setWorkflowId(created.id);
+        }
+      } catch (backendErr) {
+        console.warn('Backend save failed, saving to local offline storage:', backendErr);
+        if (!savedId) {
+          savedId = `wf_local_${Date.now()}`;
+          setWorkflowId(savedId);
+        }
+      }
+
+      // Persist in localStorage backup
+      const savedWorkflowObj: Workflow = {
+        id: savedId || `wf_local_${Date.now()}`,
+        name: workflowName,
+        nodes: payload.nodes as any,
+        edges: payload.edges as any,
+        nodes_count: payload.nodes.length,
+        edges_count: payload.edges.length,
+        updated_at: new Date().toISOString(),
+        created_at: new Date().toISOString(),
+      };
+      const currentList = loadSavedWorkflowsFromStorage();
+      const existingIdx = currentList.findIndex((w) => w.id === savedWorkflowObj.id);
+      if (existingIdx >= 0) {
+        currentList[existingIdx] = { ...currentList[existingIdx], ...savedWorkflowObj };
+      } else {
+        currentList.unshift(savedWorkflowObj);
+      }
+      saveWorkflowsToStorage(currentList);
+
+      await fetchMyWorkflows();
+      addTerminalLog('SYSTEM', 'stdout', `Workflow '${workflowName}' (${payload.nodes.length} agents) saved successfully.`);
       alert(t('save_success'));
     } catch (err: any) {
       alert(`Save notice: ${err.message || 'Offline mode saved in memory'}`);
@@ -856,16 +1155,25 @@ export const AppContent: React.FC = () => {
 
   return (
     <div className="flex h-screen w-screen bg-gray-100 dark:bg-[#0B0F19] text-gray-900 dark:text-gray-100 overflow-hidden select-none transition-colors duration-200">
-      {/* 1. Left Sidebar: Enterprise Agent Library (7) & Workflow Templates (3) */}
+      {/* 1. Left Sidebar: Enterprise Agent Library (7), Workflow Templates (3), and My Workflows */}
       <LeftSidebar
         presets={presets}
         templates={templates}
+        myWorkflows={myWorkflows}
+        currentWorkflowId={workflowId}
         onSelectTemplate={loadTemplateById}
         onAddAgentPreset={(preset) => handleAddAgentPreset(preset)}
+        onSelectWorkflow={handleSelectSavedWorkflow}
+        onDeleteWorkflow={handleDeleteSavedWorkflow}
+        onRefreshWorkflows={fetchMyWorkflows}
+        onCreateNewWorkflow={handleCreateNewWorkflow}
+        onSaveCurrentWorkflow={handleSaveWorkflow}
+        isCollapsed={isSidebarCollapsed}
+        onToggleCollapse={() => setIsSidebarCollapsed((prev) => !prev)}
       />
 
       {/* 2. Main Middle & Right Layout */}
-      <div className="flex-1 flex flex-col h-full overflow-hidden">
+      <div className="flex-1 flex flex-col h-full overflow-hidden min-w-0">
         {/* Top Header with Theme & Language Controls */}
         <Header
           workflowName={workflowName}
@@ -883,11 +1191,20 @@ export const AppContent: React.FC = () => {
         />
 
         {/* Center Canvas + Bottom Terminal + Right Inspector */}
-        <div className="flex-1 flex overflow-hidden">
+        <div className="flex-1 flex overflow-hidden relative">
           {/* Canvas & Bottom Terminal Column */}
-          <div className="flex-1 flex flex-col h-full overflow-hidden relative">
+          <div className="flex-1 flex flex-col h-full overflow-hidden relative min-w-0">
             {/* React Flow Canvas */}
             <div className="flex-1 relative overflow-hidden">
+              {/* Execution HUD & Progress Bar */}
+              <ExecutionProgressBar
+                isExecuting={isExecuting}
+                executionId={executionId}
+                nodes={nodes}
+                onSelectNode={(nodeId) => setSelectedNodeId(nodeId)}
+                selectedNodeId={selectedNodeId}
+              />
+
               <FlowCanvas
                 nodes={nodes}
                 edges={edges}
@@ -909,27 +1226,34 @@ export const AppContent: React.FC = () => {
             {/* Bottom Live Terminal Drawer */}
             <div
               style={{ height: terminalHeight }}
-              className="border-t border-gray-200 dark:border-gray-800 shrink-0 transition-all"
+              className="border-t border-gray-200 dark:border-gray-800 shrink-0 transition-all duration-200"
             >
               <LiveTerminal
                 logs={terminalLogs}
                 isConnected={isWsConnected}
                 onClearLogs={() => setTerminalLogs([])}
+                heightMode={terminalHeightMode}
+                onToggleHeight={(mode) => setTerminalHeightMode(mode)}
               />
             </div>
           </div>
 
           {/* Right Inspector & Node Settings Pane */}
-          <aside className="w-96 h-full border-l border-gray-200 dark:border-gray-800 bg-white dark:bg-[#0D131F] flex flex-col shrink-0 z-20 shadow-lg dark:shadow-2xl transition-colors duration-200">
-            <NodeInspector
-              selectedNode={selectedNode}
-              onUpdateNodeData={handleUpdateNodeData}
-              onDeleteNode={handleDeleteNode}
-              onSimulateViolation={(nodeId, nodeData) =>
-                triggerSimulatedScopeViolation(nodeId, nodeData)
-              }
-            />
-          </aside>
+          {selectedNode && (
+            <aside className="w-96 h-full border-l border-gray-200 dark:border-gray-800 bg-white dark:bg-[#0D131F] flex flex-col shrink-0 z-20 shadow-lg dark:shadow-2xl transition-all duration-200 animate-in slide-in-from-right-4">
+              <NodeInspector
+                selectedNode={selectedNode}
+                allNodes={nodes}
+                edges={edges}
+                onUpdateNodeData={handleUpdateNodeData}
+                onDeleteNode={handleDeleteNode}
+                onSimulateViolation={(nodeId, nodeData) =>
+                  triggerSimulatedScopeViolation(nodeId, nodeData)
+                }
+                onClose={() => setSelectedNodeId(null)}
+              />
+            </aside>
+          )}
         </div>
       </div>
 
@@ -941,6 +1265,16 @@ export const AppContent: React.FC = () => {
         onRevert={handleRevertViolations}
         onApprove={handleApproveViolations}
         isProcessing={isResolvingViolation}
+      />
+
+      {/* 4. Pre-Execution Human Approval Gate Modal */}
+      <HumanApprovalModal
+        isOpen={approvalModalOpen}
+        approvalData={currentApproval}
+        onClose={() => setApprovalModalOpen(false)}
+        onApprove={handleApproveNode}
+        onReject={handleRejectNode}
+        isProcessing={isResolvingApproval}
       />
     </div>
   );

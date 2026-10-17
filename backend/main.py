@@ -506,9 +506,22 @@ def update_workflow(workflow_id: str, payload: UpdateWorkflowDTO):
             (name, description, now_iso, workflow_id)
         )
 
+        existing_edges = []
+        if payload.nodes is not None and payload.edges is None:
+            cursor.execute("SELECT id, source_node_id, target_node_id, condition FROM edges WHERE workflow_id = ?", (workflow_id,))
+            existing_edges = [dict(r) for r in cursor.fetchall()]
+
+        node_id_map = {}
         if payload.nodes is not None:
             cursor.execute("DELETE FROM nodes WHERE workflow_id = ?", (workflow_id,))
             for n in payload.nodes:
+                target_id = n.id
+                cursor.execute("SELECT workflow_id FROM nodes WHERE id = ?", (target_id,))
+                existing = cursor.fetchone()
+                if existing and existing["workflow_id"] != workflow_id:
+                    target_id = f"{workflow_id}_{n.id}"
+                node_id_map[n.id] = target_id
+
                 cursor.execute(
                     """
                     INSERT INTO nodes (
@@ -519,7 +532,7 @@ def update_workflow(workflow_id: str, payload: UpdateWorkflowDTO):
                     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     """,
                     (
-                        n.id,
+                        target_id,
                         workflow_id,
                         n.preset_id,
                         n.role_name,
@@ -539,12 +552,25 @@ def update_workflow(workflow_id: str, payload: UpdateWorkflowDTO):
         if payload.edges is not None:
             cursor.execute("DELETE FROM edges WHERE workflow_id = ?", (workflow_id,))
             for e in payload.edges:
+                src = node_id_map.get(e.source_node_id, e.source_node_id)
+                tgt = node_id_map.get(e.target_node_id, e.target_node_id)
                 cursor.execute(
                     """
                     INSERT INTO edges (id, workflow_id, source_node_id, target_node_id, condition)
                     VALUES (?, ?, ?, ?, ?)
                     """,
-                    (e.id, workflow_id, e.source_node_id, e.target_node_id, e.condition)
+                    (e.id, workflow_id, src, tgt, e.condition)
+                )
+        elif existing_edges:
+            for er in existing_edges:
+                src = node_id_map.get(er["source_node_id"], er["source_node_id"])
+                tgt = node_id_map.get(er["target_node_id"], er["target_node_id"])
+                cursor.execute(
+                    """
+                    INSERT OR IGNORE INTO edges (id, workflow_id, source_node_id, target_node_id, condition)
+                    VALUES (?, ?, ?, ?, ?)
+                    """,
+                    (er["id"], workflow_id, src, tgt, er["condition"])
                 )
 
     return get_workflow(workflow_id)
@@ -587,6 +613,21 @@ async def execute_workflow(workflow_id: str, payload: ExecuteWorkflowDTO):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=git_err_msg
+        )
+
+    # Check DAG for cycles before starting execution
+    with db_session() as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT id FROM nodes WHERE workflow_id = ?", (workflow_id,))
+        wf_nodes = [r["id"] for r in cursor.fetchall()]
+        cursor.execute("SELECT source_node_id, target_node_id FROM edges WHERE workflow_id = ?", (workflow_id,))
+        wf_edges = [(r["source_node_id"], r["target_node_id"]) for r in cursor.fetchall()]
+
+    has_cycle, cycle_nodes = orchestrator.check_cycles(wf_nodes, wf_edges)
+    if has_cycle:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Workflow contains circular dependencies / cycle: {cycle_nodes}"
         )
 
     execution_id = f"exec_{uuid.uuid4().hex}"
@@ -899,46 +940,46 @@ async def websocket_execution_endpoint(websocket: WebSocket, execution_id: str):
     """Realtime WebSocket endpoint streaming terminal logs, status changes, and violation alerts."""
     await ws_hub.connect(execution_id, websocket)
 
-    # Send connection acknowledgment
-    await websocket.send_json({
-        "type": "connection_ack",
-        "execution_id": execution_id,
-        "timestamp": get_utc_now(),
-        "payload": {
-            "connected": True,
-            "message": "WebSocket connection established successfully."
-        }
-    })
-
-    # Replay any existing node statuses or violations that occurred before client connected
     try:
-        with db_session() as conn:
-            cursor = conn.cursor()
-            cursor.execute("SELECT * FROM execution_nodes WHERE execution_id = ?", (execution_id,))
-            for nr in cursor.fetchall():
-                if nr["status"] == "violation_paused" and nr["violation_data"]:
-                    v_data = json.loads(nr["violation_data"])
-                    cursor.execute("SELECT role_name, allowed_paths FROM nodes WHERE id = ?", (nr["node_id"],))
-                    n_info = cursor.fetchone()
-                    role_name = n_info["role_name"] if n_info else "Agent"
-                    allowed_paths = json.loads(n_info["allowed_paths"]) if n_info and n_info["allowed_paths"] else []
-                    await websocket.send_json({
-                        "type": "scope_violation_alert",
-                        "execution_id": execution_id,
-                        "timestamp": get_utc_now(),
-                        "payload": {
-                            "node_id": nr["node_id"],
-                            "role_name": role_name,
-                            "allowed_paths": allowed_paths,
-                            "unauthorized_files": v_data.get("unauthorized_files", []),
-                            "diffs": v_data.get("diffs", []),
-                            "detected_at": v_data.get("detected_at", get_utc_now()),
-                        }
-                    })
-    except Exception as e:
-        logger.warning(f"Failed to replay state on WS connect: {e}")
+        # Send connection acknowledgment
+        await websocket.send_json({
+            "type": "connection_ack",
+            "execution_id": execution_id,
+            "timestamp": get_utc_now(),
+            "payload": {
+                "connected": True,
+                "message": "WebSocket connection established successfully."
+            }
+        })
 
-    try:
+        # Replay any existing node statuses or violations that occurred before client connected
+        try:
+            with db_session() as conn:
+                cursor = conn.cursor()
+                cursor.execute("SELECT * FROM execution_nodes WHERE execution_id = ?", (execution_id,))
+                for nr in cursor.fetchall():
+                    if nr["status"] == "violation_paused" and nr["violation_data"]:
+                        v_data = json.loads(nr["violation_data"])
+                        cursor.execute("SELECT role_name, allowed_paths FROM nodes WHERE id = ?", (nr["node_id"],))
+                        n_info = cursor.fetchone()
+                        role_name = n_info["role_name"] if n_info else "Agent"
+                        allowed_paths = json.loads(n_info["allowed_paths"]) if n_info and n_info["allowed_paths"] else []
+                        await websocket.send_json({
+                            "type": "scope_violation_alert",
+                            "execution_id": execution_id,
+                            "timestamp": get_utc_now(),
+                            "payload": {
+                                "node_id": nr["node_id"],
+                                "role_name": role_name,
+                                "allowed_paths": allowed_paths,
+                                "unauthorized_files": v_data.get("unauthorized_files", []),
+                                "diffs": v_data.get("diffs", []),
+                                "detected_at": v_data.get("detected_at", get_utc_now()),
+                            }
+                        })
+        except Exception:
+            pass
+
         while True:
             data = await websocket.receive_text()
             try:
@@ -953,9 +994,11 @@ async def websocket_execution_endpoint(websocket: WebSocket, execution_id: str):
                     })
             except json.JSONDecodeError:
                 pass
-    except WebSocketDisconnect:
-        await ws_hub.disconnect(execution_id, websocket)
+    except (WebSocketDisconnect, ConnectionResetError):
+        pass
     except Exception:
+        pass
+    finally:
         await ws_hub.disconnect(execution_id, websocket)
 
 

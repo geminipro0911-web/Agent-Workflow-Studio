@@ -80,8 +80,10 @@ export interface Workflow {
   template_id?: string;
   created_at?: string;
   updated_at?: string;
-  nodes: AgentNodeConfig[];
-  edges: WorkflowEdgeConfig[];
+  nodes?: AgentNodeConfig[];
+  edges?: WorkflowEdgeConfig[];
+  nodes_count?: number;
+  edges_count?: number;
 }
 
 export interface ExecutionNodeState {

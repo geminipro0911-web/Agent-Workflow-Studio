@@ -290,11 +290,19 @@ class CLIRunner:
                         stdout=asyncio.subprocess.PIPE,
                         stderr=asyncio.subprocess.PIPE,
                     )
-                    stdout, stderr = await proc.communicate()
-                    if stdout:
-                        await emit(stdout.decode("utf-8", errors="replace"))
-                    if stderr:
-                        await emit(stderr.decode("utf-8", errors="replace"), stream="stderr")
+                    try:
+                        stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=45.0)
+                        if stdout:
+                            await emit(stdout.decode("utf-8", errors="replace"))
+                        if stderr:
+                            await emit(stderr.decode("utf-8", errors="replace"), stream="stderr")
+                    except asyncio.TimeoutError:
+                        kill_process_tree(proc.pid)
+                        try:
+                            proc.kill()
+                        except Exception:
+                            pass
+                        await emit("[WARN] Pytest test suite timed out after 45s.\n", stream="stderr")
 
             await emit(f"[COMPLETE] Session finished with status code 0 (Success).\n")
             return True
@@ -356,33 +364,64 @@ class CLIRunner:
         resolved_cli = shutil.which(self.cli_binary) or self.cli_binary
         await emit(f"[PROCESS] Spawning Gemini CLI process: '{resolved_cli}' in {workspace_dir} (Timeout: {timeout}s)...\n")
 
-        cmd = [resolved_cli, "-p", full_prompt, "--yolo", "--skip-trust"]
+        is_windows = sys.platform == "win32"
+        is_cmd_file = is_windows and resolved_cli.lower().endswith((".cmd", ".bat"))
+        use_stdin = len(full_prompt) > 4000
+
+        if use_stdin:
+            if is_cmd_file:
+                cmd = ["cmd.exe", "/c", resolved_cli, "--yolo", "--skip-trust"]
+            else:
+                cmd = [resolved_cli, "--yolo", "--skip-trust"]
+        else:
+            if is_cmd_file:
+                cmd = ["cmd.exe", "/c", resolved_cli, "-p", full_prompt, "--yolo", "--skip-trust"]
+            else:
+                cmd = [resolved_cli, "-p", full_prompt, "--yolo", "--skip-trust"]
 
         # Force UTF-8 environment across Windows and POSIX to avoid font/encoding corruption
         sub_env = os.environ.copy()
         sub_env["PYTHONIOENCODING"] = "utf-8"
         sub_env["PYTHONUTF8"] = "1"
 
+        creation_flags = 0
+        if is_windows:
+            import subprocess
+            creation_flags = subprocess.CREATE_NEW_PROCESS_GROUP
+
         process: Optional[asyncio.subprocess.Process] = None
         try:
             process = await asyncio.create_subprocess_exec(
                 *cmd,
                 cwd=workspace_dir,
+                stdin=asyncio.subprocess.PIPE if use_stdin else None,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
                 env=sub_env,
+                creationflags=creation_flags,
             )
 
             if execution_id:
                 self.register_process(execution_id, process)
 
+            if use_stdin and process.stdin:
+                try:
+                    process.stdin.write(full_prompt.encode("utf-8"))
+                    await process.stdin.drain()
+                    process.stdin.close()
+                except Exception as e:
+                    await emit(f"[WARN] Error writing prompt to stdin: {e}\n", stream="stderr")
+
             async def read_stream(stream, stream_type: str):
-                while True:
-                    line = await stream.readline()
-                    if not line:
-                        break
-                    decoded = line.decode("utf-8", errors="replace")
-                    await emit(decoded, stream=stream_type)
+                try:
+                    while True:
+                        chunk = await stream.read(4096)
+                        if not chunk:
+                            break
+                        decoded = chunk.decode("utf-8", errors="replace")
+                        await emit(decoded, stream=stream_type)
+                except Exception:
+                    pass
 
             async def wait_process():
                 await asyncio.gather(
@@ -408,11 +447,18 @@ class CLIRunner:
                             stdout=asyncio.subprocess.PIPE,
                             stderr=asyncio.subprocess.PIPE,
                         )
-                        p_stdout, p_stderr = await proc.communicate()
-                        if p_stdout:
-                            await emit(p_stdout.decode("utf-8", errors="replace"))
-                        if p_stderr:
-                            await emit(p_stderr.decode("utf-8", errors="replace"), stream="stderr")
+                        try:
+                            p_stdout, p_stderr = await asyncio.wait_for(proc.communicate(), timeout=45.0)
+                            if p_stdout:
+                                await emit(p_stdout.decode("utf-8", errors="replace"))
+                            if p_stderr:
+                                await emit(p_stderr.decode("utf-8", errors="replace"), stream="stderr")
+                        except asyncio.TimeoutError:
+                            kill_process_tree(proc.pid)
+                            try:
+                                proc.kill()
+                            except Exception:
+                                pass
                 await emit(f"[COMPLETE] Fallback execution completed with status code 0.\n")
                 return True
 
@@ -461,11 +507,18 @@ class CLIRunner:
                         stdout=asyncio.subprocess.PIPE,
                         stderr=asyncio.subprocess.PIPE,
                     )
-                    p_stdout, p_stderr = await proc.communicate()
-                    if p_stdout:
-                        await emit(p_stdout.decode("utf-8", errors="replace"))
-                    if p_stderr:
-                        await emit(p_stderr.decode("utf-8", errors="replace"), stream="stderr")
+                    try:
+                        p_stdout, p_stderr = await asyncio.wait_for(proc.communicate(), timeout=45.0)
+                        if p_stdout:
+                            await emit(p_stdout.decode("utf-8", errors="replace"))
+                        if p_stderr:
+                            await emit(p_stderr.decode("utf-8", errors="replace"), stream="stderr")
+                    except asyncio.TimeoutError:
+                        kill_process_tree(proc.pid)
+                        try:
+                            proc.kill()
+                        except Exception:
+                            pass
             await emit(f"[COMPLETE] Fallback execution completed with status code 0.\n")
             return True
         finally:

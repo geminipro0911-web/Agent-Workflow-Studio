@@ -135,23 +135,23 @@ export const Header: React.FC<HeaderProps> = ({
   const SkinIcon = currentSkinOption.icon;
 
   return (
-    <header className="h-16 bg-white dark:bg-[#101726] border-b border-gray-200 dark:border-gray-800 px-5 flex items-center justify-between z-30 select-none shadow-md dark:shadow-xl transition-colors duration-200">
+    <header className="h-16 bg-white dark:bg-[#101726] border-b border-gray-200 dark:border-gray-800 px-3 md:px-5 flex items-center justify-between z-30 select-none shadow-md dark:shadow-xl transition-colors duration-200 gap-2 overflow-x-auto scrollbar-none">
       {/* Brand & Workflow Title */}
-      <div className="flex items-center gap-4">
-        <div className="flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-cyan-500 flex items-center justify-center shadow-lg shadow-blue-600/30">
+      <div className="flex items-center gap-3 shrink-0">
+        <div className="flex items-center gap-2">
+          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-cyan-500 flex items-center justify-center shadow-lg shadow-blue-600/30 shrink-0">
             <Cpu className="w-5 h-5 text-white" />
           </div>
-          <div>
+          <div className="hidden sm:block">
             <div className="flex items-center gap-2">
-              <h1 className="text-sm font-extrabold text-gray-900 dark:text-white tracking-tight">
+              <h1 className="text-sm font-extrabold text-gray-900 dark:text-white tracking-tight whitespace-nowrap">
                 {t('studio_title')}
               </h1>
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400 border border-blue-500/30">
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400 border border-blue-500/30 whitespace-nowrap">
                 {t('studio_badge')}
               </span>
             </div>
-            <p className="text-[10px] text-gray-500 dark:text-gray-400 font-mono">
+            <p className="text-[10px] text-gray-500 dark:text-gray-400 font-mono whitespace-nowrap">
               {t('studio_subtitle')}
             </p>
           </div>
@@ -160,14 +160,14 @@ export const Header: React.FC<HeaderProps> = ({
         <div className="h-6 w-px bg-gray-200 dark:bg-gray-800 hidden md:block" />
 
         {/* Workflow Name Editable */}
-        <div className="hidden sm:flex items-center gap-2 bg-gray-100 dark:bg-gray-900/80 px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-800">
-          <Layers className="w-3.5 h-3.5 text-blue-500 dark:text-blue-400" />
+        <div className="hidden sm:flex items-center gap-2 bg-gray-100 dark:bg-gray-900/80 px-2.5 py-1.5 rounded-lg border border-gray-200 dark:border-gray-800">
+          <Layers className="w-3.5 h-3.5 text-blue-500 dark:text-blue-400 shrink-0" />
           <input
             type="text"
             value={workflowName}
             onChange={(e) => onNameChange(e.target.value)}
             placeholder={t('workflow_name_placeholder')}
-            className="text-xs bg-transparent text-gray-800 dark:text-gray-200 focus:outline-none font-semibold w-44 truncate"
+            className="text-xs bg-transparent text-gray-800 dark:text-gray-200 focus:outline-none font-semibold w-24 md:w-36 lg:w-44 truncate"
           />
         </div>
       </div>
@@ -274,7 +274,7 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
 
         {/* Target Project Path Input with Git Auditor Verification */}
-        <div className="flex items-center gap-1.5 bg-gray-100 dark:bg-gray-900/90 px-2.5 py-1 rounded-xl border border-gray-300 dark:border-gray-800 shadow-inner max-w-[280px] lg:max-w-[340px]">
+        <div className="flex items-center gap-1.5 bg-gray-100 dark:bg-gray-900/90 px-2.5 py-1 rounded-xl border border-gray-300 dark:border-gray-800 shadow-inner max-w-[200px] md:max-w-[260px] lg:max-w-[320px] shrink-0">
           <FolderGit2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
           <input
             type="text"
@@ -320,11 +320,11 @@ export const Header: React.FC<HeaderProps> = ({
         <button
           type="button"
           onClick={onTriggerGlobalViolationTest}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-red-500/10 text-red-700 dark:bg-red-500/20 dark:text-red-300 border border-red-500/40 hover:bg-red-500/20 shadow-sm transition transform active:scale-95"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-red-500/10 text-red-700 dark:bg-red-500/20 dark:text-red-300 border border-red-500/40 hover:bg-red-500/20 shadow-sm transition transform active:scale-95 shrink-0"
           title="Instantly simulate a Git Scope Violation alert with unified diff"
         >
           <ShieldAlert className="w-4 h-4 text-red-600 dark:text-red-400 animate-pulse" />
-          <span className="hidden md:inline">{t('test_violation')}</span>
+          <span className="hidden xl:inline">{t('test_violation')}</span>
         </button>
 
         {/* Run / Stop Workflow Controls */}
@@ -332,7 +332,7 @@ export const Header: React.FC<HeaderProps> = ({
           <button
             type="button"
             onClick={onStopWorkflow}
-            className="flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold bg-rose-600 hover:bg-rose-500 text-white shadow-md shadow-rose-600/30 transition transform active:scale-95 animate-pulse"
+            className="flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold bg-rose-600 hover:bg-rose-500 text-white shadow-md shadow-rose-600/30 transition transform active:scale-95 animate-pulse shrink-0"
           >
             <Square className="w-3.5 h-3.5 fill-white" />
             <span>{t('stop_execution')}</span>
@@ -341,7 +341,7 @@ export const Header: React.FC<HeaderProps> = ({
           <button
             type="button"
             onClick={onRunWorkflow}
-            className="flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-500 hover:from-blue-500 hover:to-indigo-400 text-white shadow-md shadow-blue-600/30 transition transform active:scale-95"
+            className="flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-500 hover:from-blue-500 hover:to-indigo-400 text-white shadow-md shadow-blue-600/30 transition transform active:scale-95 shrink-0"
           >
             <Play className="w-3.5 h-3.5 fill-white" />
             <span>{t('run_workflow')}</span>
@@ -352,11 +352,11 @@ export const Header: React.FC<HeaderProps> = ({
         <button
           type="button"
           onClick={onSaveWorkflow}
-          className="hidden sm:flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-700 transition"
+          className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-700 transition shrink-0"
           title="Save layout and configurations"
         >
           <Save className="w-3.5 h-3.5" />
-          <span>{t('save_workflow')}</span>
+          <span className="hidden md:inline">{t('save_workflow')}</span>
         </button>
 
         {/* Reset Canvas */}

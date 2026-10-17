@@ -56,3 +56,4 @@ logs/
 # Test Workspaces & Sandboxes
 lan_snake_workspace/
 test_e2e_lan_snake.py
+build_manifest_*.txt

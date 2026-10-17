@@ -129,6 +129,49 @@ export const translations = {
     confirm_clear_canvas: 'Clear all nodes and edges from canvas?',
     empty_canvas_alert: 'The canvas is empty. Please add agents or load a template.',
     save_success: 'Workflow saved successfully to SQLite database!',
+
+    // Human Approval Modal
+    approval_modal_title: 'Human-in-the-Loop Approval Required',
+    approval_modal_sub: '[Pre-Execution Security Gate]',
+    approval_node_heading: 'Agent {role} is waiting for your authorization!',
+    approval_box_desc: 'This node requires explicit human sign-off before running tasks or claiming workspace locks. Review its planned task prompt and designated write boundaries below.',
+    approval_note_label: 'Lead Decision / Directives (Optional)',
+    approval_note_placeholder: 'e.g. Approved. Adhere strictly to clean architecture guidelines.',
+    approve_btn: 'Approve & Execute Node',
+    reject_btn: 'Reject & Skip Downstream',
+
+    // Execution HUD & Progress
+    execution_hud_title: 'Pipeline Execution Monitor',
+    elapsed_time: 'Elapsed',
+    nodes_completed: '{completed}/{total} Nodes',
+    status_executing: 'Pipeline Running',
+    status_finished: 'Pipeline Finished',
+
+    // Quick Variable & Snippet Picker
+    quick_variables_title: 'Context Variables (Upstream Output)',
+    quick_snippets_title: 'Quick Instruction Snippets',
+    no_upstream_nodes: 'No upstream dependencies connected.',
+    collapse_panel: 'Collapse Panel',
+    expand_panel: 'Expand Panel',
+
+    // My Workflows Tab
+    my_workflows: 'Saved ({count})',
+    my_workflows_title: 'My Workflows',
+    no_saved_workflows: 'No saved workflows yet.',
+    no_saved_workflows_sub: 'Click "Save Workflow" in the top bar to save your current DAG and reuse it anytime.',
+    save_current_to_list: 'Save Current Workflow',
+    search_workflows_placeholder: 'Search saved workflows...',
+    load_workflow: 'Open Workflow',
+    delete_workflow: 'Delete',
+    confirm_delete_workflow: 'Are you sure you want to delete workflow "{name}"?',
+    workflow_active_badge: 'Active',
+    created_date: 'Created',
+    updated_date: 'Updated',
+    refresh_workflows: 'Refresh',
+    new_blank_workflow: 'New Blank Canvas',
+    view_nodes_detail: 'View nodes ({count})',
+    hide_nodes_detail: 'Hide details',
+    export_json_tooltip: 'Export this workflow as JSON',
   },
 
   vi: {
@@ -259,5 +302,48 @@ export const translations = {
     confirm_clear_canvas: 'Bạn có chắc chắn muốn xóa toàn bộ sơ đồ trên bảng vẽ?',
     empty_canvas_alert: 'Bảng vẽ đang trống. Vui lòng thêm Agent hoặc tải một mẫu quy trình.',
     save_success: 'Đã lưu cấu hình quy trình thành công vào cơ sở dữ liệu SQLite!',
+
+    // Human Approval Modal
+    approval_modal_title: 'Cổng Phê Duyệt Chuyên Môn Bắt Buộc',
+    approval_modal_sub: '[Kiểm Soát Thủ Công Trước Thực Thi]',
+    approval_node_heading: 'Agent {role} đang chờ lệnh cấp phép để chạy!',
+    approval_box_desc: 'Node này được cấu hình cổng phê duyệt của Tech Lead trước khi được phép ghi file hay nhận khóa ảo. Vui lòng xem xét kỹ nhiệm vụ và các thư mục được phép thao tác.',
+    approval_note_label: 'Ý kiến chỉ đạo / Ghi chú phê duyệt (Tùy chọn)',
+    approval_note_placeholder: 'Ví dụ: Đồng ý cấp quyền. Yêu cầu bám sát tài liệu api_spec.md.',
+    approve_btn: 'Phê Duyệt & Khởi Chạy Node',
+    reject_btn: 'Từ Chối & Bỏ Qua Nhánh Phụ Thuộc',
+
+    // Execution HUD & Progress
+    execution_hud_title: 'Giám Sát Tiến Độ Đồ Thị DAG',
+    elapsed_time: 'Thời gian',
+    nodes_completed: '{completed}/{total} Nodes',
+    status_executing: 'Đang Thực Thi',
+    status_finished: 'Đã Hoàn Thành',
+
+    // Quick Variable & Snippet Picker
+    quick_variables_title: 'Biến Ngữ Cảnh (Kết Quả Node Thượng Nguồn)',
+    quick_snippets_title: 'Mẫu Câu Lệnh Tác Vụ Nhanh',
+    no_upstream_nodes: 'Chưa có node thượng nguồn liên kết.',
+    collapse_panel: 'Thu gọn bảng',
+    expand_panel: 'Mở rộng bảng',
+
+    // My Workflows Tab
+    my_workflows: 'Của tôi ({count})',
+    my_workflows_title: 'Quy trình đã lưu của tôi',
+    no_saved_workflows: 'Chưa có quy trình nào được lưu.',
+    no_saved_workflows_sub: 'Bấm "Lưu quy trình" trên thanh công cụ để lưu và tái sử dụng lại bất cứ lúc nào.',
+    save_current_to_list: 'Lưu quy trình hiện tại',
+    search_workflows_placeholder: 'Tìm kiếm quy trình...',
+    load_workflow: 'Mở quy trình',
+    delete_workflow: 'Xóa',
+    confirm_delete_workflow: 'Bạn có chắc chắn muốn xóa quy trình "{name}"?',
+    workflow_active_badge: 'Đang mở',
+    created_date: 'Ngày tạo',
+    updated_date: 'Cập nhật',
+    refresh_workflows: 'Làm mới',
+    new_blank_workflow: 'Tạo quy trình mới',
+    view_nodes_detail: 'Xem danh sách node ({count})',
+    hide_nodes_detail: 'Thu gọn chi tiết',
+    export_json_tooltip: 'Xuất quy trình này thành file JSON',
   },
 };

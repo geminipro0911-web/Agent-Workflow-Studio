@@ -6,20 +6,30 @@ import {
   Check,
   Circle,
   ArrowDownCircle,
+  Maximize2,
+  Minimize2,
+  ChevronUp,
+  ChevronDown,
 } from 'lucide-react';
 import { TerminalLog } from '../../types';
 import { useThemeLanguage } from '../../context/ThemeLanguageContext';
+
+export type TerminalHeightMode = 'minimized' | 'normal' | 'expanded';
 
 interface LiveTerminalProps {
   logs: TerminalLog[];
   isConnected: boolean;
   onClearLogs: () => void;
+  heightMode?: TerminalHeightMode;
+  onToggleHeight?: (mode: TerminalHeightMode) => void;
 }
 
 export const LiveTerminal: React.FC<LiveTerminalProps> = ({
   logs,
   isConnected,
   onClearLogs,
+  heightMode = 'normal',
+  onToggleHeight,
 }) => {
   const { t } = useThemeLanguage();
   const [filterNode, setFilterNode] = useState<string>('all');
@@ -122,6 +132,51 @@ export const LiveTerminal: React.FC<LiveTerminalProps> = ({
           >
             <Trash2 className="w-3.5 h-3.5" />
           </button>
+
+          {/* Height Toggle (Minimize / Normal / Expand) */}
+          {onToggleHeight && (
+            <div className="flex items-center gap-1 border-l border-gray-700/80 pl-1.5 ml-0.5">
+              {heightMode !== 'expanded' ? (
+                <button
+                  type="button"
+                  onClick={() => onToggleHeight('expanded')}
+                  className="p-1.5 rounded hover:bg-gray-800 text-gray-400 hover:text-gray-200 transition"
+                  title="Phóng to Terminal (420px)"
+                >
+                  <Maximize2 className="w-3.5 h-3.5" />
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => onToggleHeight('normal')}
+                  className="p-1.5 rounded hover:bg-gray-800 text-gray-400 hover:text-gray-200 transition"
+                  title="Thu về kích thước chuẩn (240px)"
+                >
+                  <Minimize2 className="w-3.5 h-3.5" />
+                </button>
+              )}
+
+              {heightMode !== 'minimized' ? (
+                <button
+                  type="button"
+                  onClick={() => onToggleHeight('minimized')}
+                  className="p-1.5 rounded hover:bg-gray-800 text-gray-400 hover:text-gray-200 transition"
+                  title="Thu nhỏ Terminal thành thanh trạng thái"
+                >
+                  <ChevronDown className="w-3.5 h-3.5" />
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => onToggleHeight('normal')}
+                  className="p-1.5 rounded hover:bg-gray-800 text-gray-400 hover:text-gray-200 transition"
+                  title="Mở Terminal"
+                >
+                  <ChevronUp className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
