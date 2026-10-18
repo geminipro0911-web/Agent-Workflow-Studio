@@ -7,6 +7,7 @@ Git Diff scope violation auditing, and real-time streaming.
 
 from __future__ import annotations
 
+import asyncio
 import json
 import os
 import subprocess
@@ -15,6 +16,12 @@ import uuid
 from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Any, Dict, List, Optional
+
+if sys.platform == "win32":
+    try:
+        asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())
+    except Exception:
+        pass
 
 from fastapi import (
     FastAPI,
@@ -625,13 +632,19 @@ async def execute_workflow(workflow_id: str, payload: ExecuteWorkflowDTO):
             detail=git_err_msg
         )
 
-    # Check DAG for cycles before starting execution
+    # Check DAG for nodes and cycles before starting execution
     with db_session() as conn:
         cursor = conn.cursor()
         cursor.execute("SELECT id FROM nodes WHERE workflow_id = ?", (workflow_id,))
         wf_nodes = [r["id"] for r in cursor.fetchall()]
         cursor.execute("SELECT source_node_id, target_node_id FROM edges WHERE workflow_id = ?", (workflow_id,))
         wf_edges = [(r["source_node_id"], r["target_node_id"]) for r in cursor.fetchall()]
+
+    if not wf_nodes:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Quy trình hiện không có Agent Node nào trên bảng vẽ. Vui lòng thêm ít nhất một Agent Node trước khi thực thi."
+        )
 
     has_cycle, cycle_nodes = orchestrator.check_cycles(wf_nodes, wf_edges)
     if has_cycle:
@@ -1039,12 +1052,27 @@ async def websocket_execution_endpoint(websocket: WebSocket, execution_id: str):
             }
         })
 
-        # Replay any existing node statuses or violations that occurred before client connected
+        # Replay full execution state, node statuses, logs, and alerts to client upon connection
         try:
             with db_session() as conn:
                 cursor = conn.cursor()
+                # 1. Replay all execution node states
                 cursor.execute("SELECT * FROM execution_nodes WHERE execution_id = ?", (execution_id,))
-                for nr in cursor.fetchall():
+                node_rows = cursor.fetchall()
+                for nr in node_rows:
+                    await websocket.send_json({
+                        "type": "node_status_update",
+                        "execution_id": execution_id,
+                        "timestamp": nr["end_time"] or nr["start_time"] or get_utc_now(),
+                        "payload": {
+                            "node_id": nr["node_id"],
+                            "previous_status": "pending",
+                            "current_status": nr["status"],
+                            "error_message": nr["error_message"],
+                        }
+                    })
+
+                    # If node is paused on violation, replay scope violation alert
                     if nr["status"] == "violation_paused" and nr["violation_data"]:
                         v_data = json.loads(nr["violation_data"])
                         cursor.execute("SELECT role_name, allowed_paths FROM nodes WHERE id = ?", (nr["node_id"],))
@@ -1054,7 +1082,7 @@ async def websocket_execution_endpoint(websocket: WebSocket, execution_id: str):
                         await websocket.send_json({
                             "type": "scope_violation_alert",
                             "execution_id": execution_id,
-                            "timestamp": get_utc_now(),
+                            "timestamp": v_data.get("detected_at", get_utc_now()),
                             "payload": {
                                 "node_id": nr["node_id"],
                                 "role_name": role_name,
@@ -1064,8 +1092,65 @@ async def websocket_execution_endpoint(websocket: WebSocket, execution_id: str):
                                 "detected_at": v_data.get("detected_at", get_utc_now()),
                             }
                         })
-        except Exception:
-            pass
+
+                    # If node is waiting for approval, replay approval request
+                    if nr["status"] == "waiting_approval":
+                        cursor.execute("SELECT role_name, task_prompt, allowed_paths FROM nodes WHERE id = ?", (nr["node_id"],))
+                        n_info = cursor.fetchone()
+                        if n_info:
+                            await websocket.send_json({
+                                "type": "approval_requested",
+                                "execution_id": execution_id,
+                                "timestamp": get_utc_now(),
+                                "payload": {
+                                    "node_id": nr["node_id"],
+                                    "role_name": n_info["role_name"],
+                                    "task_prompt": n_info["task_prompt"],
+                                    "allowed_paths": json.loads(n_info["allowed_paths"] or "[]"),
+                                }
+                            })
+
+                # 2. Replay all execution terminal logs in chronological order
+                cursor.execute(
+                    "SELECT * FROM execution_logs WHERE execution_id = ? ORDER BY seq_order ASC, id ASC",
+                    (execution_id,)
+                )
+                for log_row in cursor.fetchall():
+                    await websocket.send_json({
+                        "type": "terminal_log",
+                        "execution_id": execution_id,
+                        "timestamp": log_row["timestamp"],
+                        "payload": {
+                            "node_id": log_row["node_id"],
+                            "stream_type": log_row["stream_type"],
+                            "chunk": log_row["chunk"],
+                            "seq_order": log_row["seq_order"],
+                        }
+                    })
+
+                # 3. If execution already finished or is active, send current workflow status
+                cursor.execute("SELECT * FROM executions WHERE id = ?", (execution_id,))
+                exec_row = cursor.fetchone()
+                if exec_row and exec_row["status"] in ("completed", "failed", "stopped"):
+                    completed_cnt = sum(1 for nr in node_rows if nr["status"] == "completed")
+                    failed_cnt = sum(1 for nr in node_rows if nr["status"] in ("failed", "rejected"))
+                    await websocket.send_json({
+                        "type": "workflow_status_update",
+                        "execution_id": execution_id,
+                        "timestamp": exec_row["end_time"] or get_utc_now(),
+                        "payload": {
+                            "status": exec_row["status"],
+                            "summary": {
+                                "total_nodes": len(node_rows),
+                                "completed_nodes": completed_cnt,
+                                "failed_nodes": failed_cnt,
+                                "violations_resolved": 0,
+                                "duration_seconds": 1.0,
+                            }
+                        }
+                    })
+        except Exception as replay_err:
+            logger.warning(f"Error replaying execution state on WS connect: {replay_err}")
 
         while True:
             data = await websocket.receive_text()

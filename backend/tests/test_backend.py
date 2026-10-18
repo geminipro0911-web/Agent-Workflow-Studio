@@ -556,6 +556,16 @@ class TestFastAPIRoutes(unittest.TestCase):
 
         asyncio.run(run_flow())
 
+    def test_empty_workflow_execution_rejected(self):
+        """Test that attempting to execute a workflow with 0 nodes returns 400 Bad Request."""
+        create_res = self.client.post("/api/v1/workflows", json={"name": "Zero Nodes WF", "nodes": [], "edges": []})
+        self.assertEqual(create_res.status_code, 201)
+        wf_id = create_res.json()["data"]["id"]
+
+        exec_res = self.client.post(f"/api/v1/workflows/{wf_id}/execute", json={"mock_mode": True})
+        self.assertEqual(exec_res.status_code, 400)
+        self.assertIn("Agent Node", exec_res.json()["error"]["message"])
+
 
 if __name__ == "__main__":
     unittest.main()

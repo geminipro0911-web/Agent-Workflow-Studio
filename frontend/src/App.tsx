@@ -188,7 +188,7 @@ export const AppContent: React.FC = () => {
       }
 
       setWorkflowName(template.name);
-      setWorkflowId(`wf_${templateId}_${Date.now()}`);
+      setWorkflowId('');
 
       const newNodes: Node[] = template.layout_data.nodes.map((n) => ({
         id: n.id,
@@ -429,11 +429,66 @@ export const AppContent: React.FC = () => {
       return;
     }
 
+    const syncExecutionWithBackend = async (execId: string) => {
+      try {
+        const execData: any = await api.getExecutionStatus(execId);
+        const nodeStates = execData?.nodes_status || execData?.nodes || [];
+        if (nodeStates.length > 0) {
+          setNodes((nds) =>
+            nds.map((n) => {
+              const matched = nodeStates.find(
+                (ns: any) => ns.node_id === n.id || ns.node_id.endsWith(n.id) || n.id.endsWith(ns.node_id)
+              );
+              if (matched) {
+                const currentData = n.data as AgentNodeData;
+                return {
+                  ...n,
+                  data: {
+                    ...currentData,
+                    status: matched.status,
+                    error_message: matched.error_message !== undefined ? matched.error_message : currentData.error_message,
+                    violation_data: matched.violation_data !== undefined ? matched.violation_data : currentData.violation_data,
+                  },
+                };
+              }
+              return n;
+            })
+          );
+        }
+
+        // Reconcile terminal logs from DB to guarantee zero lost chunks
+        try {
+          const logs = await api.getExecutionLogs(execId);
+          if (logs && logs.length > 0) {
+            setTerminalLogs((prev) => {
+              const seen = new Set(prev.map((l) => `${l.node_id}_${l.seq_order ?? ''}_${l.chunk}`));
+              const newLogs = logs.filter((l) => !seen.has(`${l.node_id}_${l.seq_order ?? ''}_${l.chunk}`));
+              if (newLogs.length === 0) return prev;
+              return [
+                ...prev,
+                ...newLogs.map((l) => ({
+                  id: String(l.id || `${Date.now()}_${Math.random()}`),
+                  node_id: l.node_id,
+                  stream_type: l.stream_type,
+                  chunk: l.chunk,
+                  timestamp: l.timestamp,
+                  seq_order: l.seq_order,
+                })),
+              ];
+            });
+          }
+        } catch {}
+      } catch (err) {
+        console.warn('syncExecutionWithBackend error:', err);
+      }
+    };
+
     wsClient.connect(executionId);
 
     const unsubAck = wsClient.on('connection_ack', (env) => {
       setIsWsConnected(true);
       addTerminalLog('SYSTEM', 'stdout', `[WS] Connection established for ${env.execution_id}`);
+      syncExecutionWithBackend(env.execution_id);
     });
 
     const unsubStatus = wsClient.on('node_status_update', (env) => {
@@ -496,6 +551,26 @@ export const AppContent: React.FC = () => {
       if (status === 'completed' || status === 'failed' || status === 'stopped') {
         setIsExecuting(false);
         addTerminalLog('SYSTEM', 'system', `[WORKFLOW] Execution ended with status: ${status.toUpperCase()}`);
+        if (status === 'completed') {
+          setNodes((prev) =>
+            prev.map((n) => {
+              const cur = n.data as AgentNodeData;
+              if (cur.status === 'failed' || cur.status === 'rejected' || cur.status === 'skipped') {
+                return n;
+              }
+              return {
+                ...n,
+                data: {
+                  ...cur,
+                  status: 'completed',
+                },
+              };
+            })
+          );
+        }
+        if (executionId) {
+          syncExecutionWithBackend(executionId);
+        }
       }
     });
 
@@ -503,8 +578,9 @@ export const AppContent: React.FC = () => {
     const pollInterval = setInterval(async () => {
       try {
         const execData: any = await api.getExecutionStatus(executionId);
-        if (execData?.nodes) {
-          for (const n of execData.nodes) {
+        const nodeStates = execData?.nodes_status || execData?.nodes || [];
+        if (nodeStates.length > 0) {
+          for (const n of nodeStates) {
             if (n.status === 'violation_paused' && n.violation_data) {
               const vData: ViolationData = {
                 node_id: n.node_id,
@@ -518,7 +594,7 @@ export const AppContent: React.FC = () => {
               break;
             }
             if (n.status === 'waiting_approval' && !approvalModalOpen) {
-              const matchingNode = nodes.find((x) => x.id === n.node_id || n.node_id.endsWith(x.id));
+              const matchingNode = nodes.find((x) => x.id === n.node_id || n.node_id.endsWith(x.id) || x.id.endsWith(n.node_id));
               const nodeData = matchingNode?.data as AgentNodeData | undefined;
               setCurrentApproval({
                 node_id: n.node_id,
@@ -534,7 +610,7 @@ export const AppContent: React.FC = () => {
       } catch {
         // Ignore poll error
       }
-    }, 1500);
+    }, 1000);
 
     return () => {
       clearInterval(pollInterval);
@@ -888,9 +964,10 @@ export const AppContent: React.FC = () => {
 
     try {
       let wfId = workflowId;
+      let savedWf: Workflow | null = null;
       try {
         const payload = {
-          name: workflowName,
+          name: workflowName || 'Custom Workflow',
           nodes: nodes.map((n) => {
             const d = n.data as AgentNodeData;
             return {
@@ -918,15 +995,23 @@ export const AppContent: React.FC = () => {
           })),
         };
 
-        if (wfId) {
-          await api.updateWorkflow(wfId, payload);
+        if (wfId && !wfId.startsWith('wf_temp_') && !wfId.includes('sdlc_') && !wfId.includes('review_')) {
+          try {
+            savedWf = await api.updateWorkflow(wfId, payload);
+          } catch (updateErr: any) {
+            console.log('Update failed or 404, creating workflow record in DB:', updateErr);
+            savedWf = await api.createWorkflow(payload);
+          }
         } else {
-          const createdWf = await api.createWorkflow(payload);
-          wfId = createdWf.id;
+          savedWf = await api.createWorkflow(payload);
+        }
+
+        if (savedWf) {
+          wfId = savedWf.id;
           setWorkflowId(wfId);
-          if (createdWf.nodes && createdWf.nodes.length > 0) {
+          if (savedWf.nodes && savedWf.nodes.length > 0) {
             const idMap: Record<string, string> = {};
-            createdWf.nodes.forEach((cn: any, idx: number) => {
+            savedWf.nodes.forEach((cn: any, idx: number) => {
               if (payload.nodes[idx] && payload.nodes[idx].id !== cn.id) {
                 idMap[payload.nodes[idx].id] = cn.id;
               }
@@ -948,8 +1033,13 @@ export const AppContent: React.FC = () => {
             }
           }
         }
-      } catch (saveErr) {
-        console.warn('Backend save failed or in offline mode:', saveErr);
+      } catch (saveErr: any) {
+        console.warn('Backend save failed:', saveErr);
+        if (!String(saveErr?.message || saveErr).includes('Failed to fetch')) {
+          setIsExecuting(false);
+          alert(`❌ Không thể lưu cấu hình quy trình:\n\n${saveErr?.message || saveErr}`);
+          return;
+        }
       }
 
       // Trigger execution with Target Project Path (WORKSPACE_DIR)
@@ -974,10 +1064,12 @@ export const AppContent: React.FC = () => {
         errMsg.toLowerCase().includes('commit') ||
         errMsg.toLowerCase().includes('repository') ||
         errMsg.includes('Thư mục') ||
+        errMsg.includes('Agent Node') ||
+        errMsg.includes('không có') ||
         errMsg.includes('400')
       ) {
         setIsExecuting(false);
-        addTerminalLog('SYSTEM', 'stderr', `[GIT REPOSITORY ERROR] ${errMsg}`);
+        addTerminalLog('SYSTEM', 'stderr', `[WORKFLOW ERROR] ${errMsg}`);
         // Reset nodes back to idle
         setNodes((nds) =>
           nds.map((n) => ({

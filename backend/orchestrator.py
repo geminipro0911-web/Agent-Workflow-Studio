@@ -341,6 +341,40 @@ class DAGOrchestrator:
                     (f"{execution_id}_{n['id']}", execution_id, n["id"])
                 )
 
+        if not node_rows:
+            logger.warning(f"Workflow {workflow_id} has 0 nodes, aborting execution {execution_id}.")
+            with db_session() as conn:
+                cursor = conn.cursor()
+                cursor.execute(
+                    "UPDATE executions SET status = 'failed', end_time = ? WHERE id = ?",
+                    (get_utc_now(), execution_id)
+                )
+            await ws_hub.broadcast(execution_id, {
+                "type": "error_notification",
+                "execution_id": execution_id,
+                "timestamp": get_utc_now(),
+                "payload": {
+                    "error_code": "EMPTY_WORKFLOW",
+                    "message": "Không tìm thấy Agent Node nào trong quy trình để thực thi.",
+                }
+            })
+            await ws_hub.broadcast(execution_id, {
+                "type": "workflow_status_update",
+                "execution_id": execution_id,
+                "timestamp": get_utc_now(),
+                "payload": {
+                    "status": "failed",
+                    "summary": {
+                        "total_nodes": 0,
+                        "completed_nodes": 0,
+                        "failed_nodes": 0,
+                        "violations_resolved": 0,
+                        "duration_seconds": 0.0,
+                    }
+                }
+            })
+            return
+
         nodes: Dict[str, Dict[str, Any]] = {}
         for row in node_rows:
             nodes[row["id"]] = {
