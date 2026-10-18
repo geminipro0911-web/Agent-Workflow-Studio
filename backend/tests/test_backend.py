@@ -56,7 +56,7 @@ class TestPresets(unittest.TestCase):
             self.assertTrue(len(p["default_allowed_paths"]) > 0)
 
     def test_workflow_templates(self):
-        self.assertEqual(len(WORKFLOW_TEMPLATES), 7)
+        self.assertEqual(len(WORKFLOW_TEMPLATES), 10)
         expected_templates = {
             "fullstack_sdlc",
             "fast_feature",
@@ -65,6 +65,9 @@ class TestPresets(unittest.TestCase):
             "security_audit",
             "code_review_refactor",
             "db_migration_audit",
+            "monolith_modularization",
+            "spaghetti_layered_refactor",
+            "legacy_cleanup_modernization",
         }
         actual_templates = {t["id"] for t in WORKFLOW_TEMPLATES}
         self.assertEqual(expected_templates, actual_templates)
@@ -100,6 +103,21 @@ class TestPresets(unittest.TestCase):
         dbm = TEMPLATE_MAP["db_migration_audit"]
         self.assertEqual(dbm["nodes_count"], 3)
         self.assertEqual(dbm["edges_count"], 2)
+
+        # Check monolith_modularization has 4 nodes and 3 edges
+        mm = TEMPLATE_MAP["monolith_modularization"]
+        self.assertEqual(mm["nodes_count"], 4)
+        self.assertEqual(mm["edges_count"], 3)
+
+        # Check spaghetti_layered_refactor has 4 nodes and 3 edges
+        slr = TEMPLATE_MAP["spaghetti_layered_refactor"]
+        self.assertEqual(slr["nodes_count"], 4)
+        self.assertEqual(slr["edges_count"], 3)
+
+        # Check legacy_cleanup_modernization has 4 nodes and 3 edges
+        lcm = TEMPLATE_MAP["legacy_cleanup_modernization"]
+        self.assertEqual(lcm["nodes_count"], 4)
+        self.assertEqual(lcm["edges_count"], 3)
 
 
 class TestGitScopeAuditor(unittest.TestCase):
@@ -293,7 +311,7 @@ class TestFastAPIRoutes(unittest.TestCase):
         self.assertEqual(res.status_code, 200)
         data = res.json()
         self.assertTrue(data["success"])
-        self.assertEqual(len(data["data"]), 7)
+        self.assertEqual(len(data["data"]), 10)
 
     def test_workflow_lifecycle_from_template(self):
         # 1. Create workflow from template
