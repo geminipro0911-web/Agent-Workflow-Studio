@@ -1,0 +1,1216 @@
+<!DOCTYPE html>
+<html lang="vi" data-theme="dark" data-lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gemini Workflow Studio — Visual Spotlight Tutorial & Interactive Guide</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <style>
+    /* ==========================================================================
+       OPEN-DESIGN TOKENS & ANTI-AI-SLOP SYSTEM
+       Palette: Deep Obsidian (#0B0F19), Electric Blue (#2563EB), Imperial Amber (#D97706)
+       ========================================================================== */
+    :root[data-theme="dark"] {
+      --bg-base: #0B0F19;
+      --bg-surface: #111827;
+      --bg-surface-elevated: #162032;
+      --bg-subtle: #1F2937;
+      --border-subtle: #243044;
+      --border-strong: #374151;
+      --text-main: #F3F4F6;
+      --text-muted: #9CA3AF;
+      --text-faint: #6B7280;
+      
+      --accent-blue: #3B82F6;
+      --accent-blue-subtle: rgba(59, 130, 246, 0.12);
+      --accent-gold: #F59E0B;
+      --accent-gold-subtle: rgba(245, 158, 11, 0.12);
+      --accent-emerald: #10B981;
+      --accent-emerald-subtle: rgba(16, 185, 129, 0.12);
+      --accent-crimson: #EF4444;
+      --accent-crimson-subtle: rgba(239, 68, 68, 0.15);
+      
+      --spotlight-mask: rgba(11, 15, 25, 0.78);
+      --shadow-lg: 0 12px 30px rgba(0, 0, 0, 0.65);
+      --code-bg: #070A10;
+    }
+
+    :root[data-theme="light"] {
+      --bg-base: #F8FAFC;
+      --bg-surface: #FFFFFF;
+      --bg-surface-elevated: #F1F5F9;
+      --bg-subtle: #E2E8F0;
+      --border-subtle: #E2E8F0;
+      --border-strong: #CBD5E1;
+      --text-main: #0F172A;
+      --text-muted: #475569;
+      --text-faint: #94A3B8;
+      
+      --accent-blue: #2563EB;
+      --accent-blue-subtle: rgba(37, 99, 235, 0.08);
+      --accent-gold: #D97706;
+      --accent-gold-subtle: rgba(217, 119, 6, 0.08);
+      --accent-emerald: #059669;
+      --accent-emerald-subtle: rgba(5, 150, 105, 0.08);
+      --accent-crimson: #DC2626;
+      --accent-crimson-subtle: rgba(220, 38, 38, 0.08);
+      
+      --spotlight-mask: rgba(15, 23, 42, 0.68);
+      --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.12);
+      --code-bg: #F1F5F9;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background-color: var(--bg-base);
+      color: var(--text-main);
+      line-height: 1.6;
+      transition: background-color 0.25s ease, color 0.25s ease;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    code, pre, .font-mono {
+      font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
+    }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: var(--bg-base);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: var(--border-strong);
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--text-faint);
+    }
+
+    /* Top Sticky Nav */
+    .top-nav {
+      position: sticky;
+      top: 0;
+      z-index: 60;
+      height: 64px;
+      background: var(--bg-surface);
+      border-bottom: 1px solid var(--border-subtle);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 28px;
+      backdrop-filter: blur(12px);
+    }
+
+    .brand-wrap {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-icon {
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, var(--accent-blue), #1D4ED8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35);
+    }
+
+    .brand-title {
+      font-size: 15px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .badge-pill {
+      font-size: 10px;
+      font-weight: 700;
+      font-family: 'JetBrains Mono', monospace;
+      padding: 2px 7px;
+      border-radius: 9999px;
+      background: var(--accent-blue-subtle);
+      color: var(--accent-blue);
+      border: 1px solid rgba(59, 130, 246, 0.3);
+    }
+
+    .nav-controls {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .btn-toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      background: var(--bg-surface-elevated);
+      color: var(--text-main);
+      border: 1px solid var(--border-subtle);
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .btn-toggle:hover {
+      background: var(--bg-subtle);
+      border-color: var(--border-strong);
+      transform: translateY(-1px);
+    }
+
+    .btn-primary {
+      background: var(--accent-blue);
+      color: white;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
+    }
+
+    .btn-primary:hover {
+      background: #1D4ED8;
+    }
+
+    /* Hero */
+    .hero-section {
+      padding: 32px 28px 16px;
+      max-width: 1400px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    .hero-eyebrow {
+      font-size: 11px;
+      font-weight: 700;
+      font-family: 'JetBrains Mono', monospace;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--accent-gold);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 6px;
+    }
+
+    .hero-title {
+      font-size: 28px;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.25;
+      margin-bottom: 8px;
+      color: var(--text-main);
+    }
+
+    .hero-desc {
+      font-size: 14.5px;
+      color: var(--text-muted);
+      max-width: 860px;
+      line-height: 1.55;
+    }
+
+    /* Stepper Carousel Navigation */
+    .stepper-container {
+      max-width: 1400px;
+      margin: 16px auto 20px;
+      padding: 0 28px;
+      width: 100%;
+    }
+
+    .stepper-nav {
+      display: grid;
+      grid-template-columns: repeat(8, 1fr);
+      gap: 6px;
+      background: var(--bg-surface);
+      padding: 6px;
+      border-radius: 12px;
+      border: 1px solid var(--border-subtle);
+      overflow-x: auto;
+    }
+
+    .step-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      padding: 8px 10px;
+      border-radius: 8px;
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      text-align: left;
+      transition: all 0.2s ease;
+      position: relative;
+    }
+
+    .step-btn:hover {
+      background: var(--bg-surface-elevated);
+      color: var(--text-main);
+    }
+
+    .step-btn.active {
+      background: var(--bg-surface-elevated);
+      color: var(--text-main);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    }
+
+    .step-btn.active::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 10px;
+      right: 10px;
+      height: 2px;
+      background: var(--accent-blue);
+      border-radius: 2px;
+    }
+
+    .step-num {
+      font-size: 9.5px;
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 700;
+      color: var(--accent-blue);
+      margin-bottom: 2px;
+    }
+
+    .step-btn.active .step-num {
+      color: var(--accent-gold);
+    }
+
+    .step-label {
+      font-size: 11.5px;
+      font-weight: 700;
+      line-height: 1.3;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      width: 100%;
+    }
+
+    /* ==========================================================================
+       SPOTLIGHT THEATER (REAL SCREENSHOT WITH SPOTLIGHT CUTOUT & CALLOUT)
+       ========================================================================== */
+    .spotlight-theater-wrap {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 0 28px;
+      width: 100%;
+    }
+
+    .spotlight-theater {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-strong);
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: var(--shadow-lg);
+      display: grid;
+      grid-template-rows: auto 1fr;
+    }
+
+    .theater-header-bar {
+      height: 48px;
+      background: var(--bg-surface-elevated);
+      border-bottom: 1px solid var(--border-subtle);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 18px;
+      font-size: 12px;
+    }
+
+    .theater-canvas-viewport {
+      position: relative;
+      width: 100%;
+      height: 680px;
+      overflow: hidden;
+      background: #000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .real-screenshot-img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      display: block;
+      transition: filter 0.3s ease, transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    /* Dimming Backdrop Overlay */
+    .spotlight-backdrop {
+      position: absolute;
+      inset: 0;
+      background: var(--spotlight-mask);
+      pointer-events: none;
+      transition: opacity 0.35s ease;
+      z-index: 10;
+    }
+
+    /* Animated Spotlight Highlight Box */
+    .spotlight-beam-box {
+      position: absolute;
+      z-index: 20;
+      border: 2px solid var(--accent-blue);
+      border-radius: 8px;
+      box-shadow: 0 0 0 9999px var(--spotlight-mask), 0 0 30px rgba(59, 130, 246, 0.9), inset 0 0 20px rgba(59, 130, 246, 0.3);
+      pointer-events: none;
+      transition: all 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+      animation: pulseSpotlight 2.5s infinite ease-in-out;
+    }
+
+    @keyframes pulseSpotlight {
+      0%, 100% {
+        border-color: var(--accent-blue);
+        box-shadow: 0 0 0 9999px var(--spotlight-mask), 0 0 24px rgba(59, 130, 246, 0.8), inset 0 0 15px rgba(59, 130, 246, 0.25);
+      }
+      50% {
+        border-color: var(--accent-gold);
+        box-shadow: 0 0 0 9999px var(--spotlight-mask), 0 0 38px rgba(245, 158, 11, 0.95), inset 0 0 24px rgba(245, 158, 11, 0.35);
+      }
+    }
+
+    /* Floating Callout Guide Card over Spotlight */
+    .spotlight-callout-card {
+      position: absolute;
+      z-index: 30;
+      background: rgba(17, 24, 39, 0.94);
+      border: 1px solid var(--accent-blue);
+      border-radius: 14px;
+      padding: 20px 24px;
+      max-width: 440px;
+      box-shadow: 0 20px 45px rgba(0, 0, 0, 0.75), 0 0 20px rgba(59, 130, 246, 0.3);
+      backdrop-filter: blur(16px);
+      transition: all 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+      color: #F3F4F6;
+    }
+
+    .callout-badge {
+      font-size: 10px;
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 800;
+      padding: 3px 8px;
+      border-radius: 6px;
+      background: var(--accent-gold-subtle);
+      color: var(--accent-gold);
+      border: 1px solid rgba(245, 158, 11, 0.4);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 8px;
+    }
+
+    .callout-title {
+      font-size: 17px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      line-height: 1.3;
+      margin-bottom: 8px;
+      color: white;
+    }
+
+    .callout-desc {
+      font-size: 12.5px;
+      color: #D1D5DB;
+      line-height: 1.6;
+      margin-bottom: 14px;
+    }
+
+    .callout-takeaways {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-bottom: 16px;
+    }
+
+    .callout-takeaway-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      font-size: 11.5px;
+      color: #E5E7EB;
+      line-height: 1.45;
+    }
+
+    .callout-check-icon {
+      color: var(--accent-emerald);
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    .callout-footer-btns {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      padding-top: 12px;
+    }
+
+    .tour-indicator-dots {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.3);
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .dot.active {
+      width: 18px;
+      border-radius: 4px;
+      background: var(--accent-blue);
+    }
+
+    /* Modal for Full-Res Screenshot Zoom */
+    .zoom-modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.85);
+      backdrop-filter: blur(8px);
+      z-index: 100;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 30px;
+    }
+
+    .zoom-modal.active {
+      display: flex;
+    }
+
+    .zoom-modal-img {
+      max-width: 95vw;
+      max-height: 90vh;
+      object-fit: contain;
+      border-radius: 10px;
+      box-shadow: 0 0 40px rgba(0, 0, 0, 0.9);
+      border: 1px solid var(--border-strong);
+    }
+
+    /* Cheatsheet */
+    .cheatsheet-section {
+      max-width: 1400px;
+      margin: 40px auto;
+      padding: 0 28px;
+      width: 100%;
+    }
+
+    .cheatsheet-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-top: 14px;
+    }
+
+    .cheatsheet-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: 12px;
+      padding: 18px;
+    }
+
+    .cheatsheet-card h4 {
+      font-size: 13.5px;
+      font-weight: 700;
+      margin-bottom: 6px;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .cheatsheet-card p {
+      font-size: 12px;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    /* Footer */
+    .tutorial-footer {
+      margin-top: auto;
+      padding: 24px 28px;
+      background: var(--bg-surface);
+      border-top: 1px solid var(--border-subtle);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 12px;
+      color: var(--text-faint);
+    }
+
+    @media (max-width: 1024px) {
+      .stepper-nav { grid-template-columns: repeat(4, 1fr); }
+      .spotlight-callout-card {
+        position: static;
+        max-width: 100%;
+        margin-top: 16px;
+        box-shadow: none;
+      }
+      .theater-canvas-viewport { height: 420px; }
+      .cheatsheet-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+
+<body>
+  <!-- ======================================================================
+       STICKY NAVIGATION BAR
+       ====================================================================== -->
+  <header class="top-nav">
+    <div class="brand-wrap">
+      <div class="brand-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="4" y="4" width="16" height="16" rx="2"></rect>
+          <path d="M9 9h6v6H9z"></path>
+          <path d="M9 1v3M15 1v3M9 20v3M15 20v3M20 9h3M20 14h3M1 9h3M1 14h3"></path>
+        </svg>
+      </div>
+      <div>
+        <div class="brand-title">
+          <span>Gemini Workflow Studio</span>
+          <span class="badge-pill" data-i18n="badge_studio">PLAYWRIGHT SPOTLIGHT TOUR</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="nav-controls">
+      <!-- Auto Play Tour Toggle Button -->
+      <button id="autoTourBtn" class="btn-toggle" onclick="toggleAutoTour()">
+        <svg id="playIcon" width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+        <span id="autoTourLabel" data-i18n="btn_auto_tour">Tự động chiếu Tour</span>
+      </button>
+
+      <!-- Language Switcher Button -->
+      <button id="langToggleBtn" class="btn-toggle" onclick="toggleLanguage()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="2" y1="12" x2="22" y2="12"></line>
+          <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+        </svg>
+        <span id="langLabel">VI / EN</span>
+      </button>
+
+      <!-- Theme Switcher Button -->
+      <button id="themeToggleBtn" class="btn-toggle" onclick="toggleTheme()">
+        <svg id="themeIcon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <circle cx="12" cy="12" r="5"></circle>
+          <line x1="12" y1="1" x2="12" y2="3"></line>
+          <line x1="12" y1="21" x2="12" y2="23"></line>
+          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+          <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+          <line x1="1" y1="12" x2="3" y2="12"></line>
+          <line x1="21" y1="12" x2="23" y2="12"></line>
+          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+          <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+        </svg>
+        <span id="themeLabel">Tối / Sáng</span>
+      </button>
+
+      <!-- Launch Studio Link -->
+      <a href="http://localhost:5173" target="_blank" class="btn-toggle btn-primary" data-i18n="btn_open_app">
+        <span>Vào Studio</span>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+          <polyline points="15 3 21 3 21 9"></polyline>
+          <line x1="10" y1="14" x2="21" y2="3"></line>
+        </svg>
+      </a>
+    </div>
+  </header>
+
+  <!-- ======================================================================
+       HERO INTRODUCTION
+       ====================================================================== -->
+  <section class="hero-section">
+    <div class="hero-eyebrow" data-i18n="hero_eyebrow">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+      </svg>
+      <span>PLAYWRIGHT VISUAL SPOTLIGHT TOUR</span>
+    </div>
+    <h1 class="hero-title" data-i18n="hero_title">Hướng Dẫn Trực Quan Chiếu Rọi Tính Năng (Spotlight Tutorial)</h1>
+    <p class="hero-desc" data-i18n="hero_desc">
+      Toàn bộ ảnh chụp màn hình độ phân giải cao được tự động ghi lại bằng Playwright từ phiên bản thực tế của ứng dụng. Mỗi bước giới thiệu sẽ chiếu rọi và làm sáng bừng phân vùng tính năng tương ứng kèm hướng dẫn chuyên sâu.
+    </p>
+  </section>
+
+  <!-- ======================================================================
+       STEPPER BUTTONS (8 STEPS)
+       ====================================================================== -->
+  <div class="stepper-container">
+    <div class="stepper-nav" id="stepperNav">
+      <button class="step-btn active" onclick="goToFeature(0)">
+        <span class="step-num">ĐIỂM SỐ 01</span>
+        <span class="step-label" data-i18n="f1_nav">Tổng quan Studio</span>
+      </button>
+      <button class="step-btn" onclick="goToFeature(1)">
+        <span class="step-num">ĐIỂM SỐ 02</span>
+        <span class="step-label" data-i18n="f2_nav">Thư viện Agent & SDLC</span>
+      </button>
+      <button class="step-btn" onclick="goToFeature(2)">
+        <span class="step-num">ĐIỂM SỐ 03</span>
+        <span class="step-label" data-i18n="f3_nav">Bảng vẽ & Chibi 3D</span>
+      </button>
+      <button class="step-btn" onclick="goToFeature(3)">
+        <span class="step-num">ĐIỂM SỐ 04</span>
+        <span class="step-label" data-i18n="f4_nav">Allowed Paths & Cấu hình</span>
+      </button>
+      <button class="step-btn" onclick="goToFeature(4)">
+        <span class="step-num">ĐIỂM SỐ 05</span>
+        <span class="step-label" data-i18n="f5_nav">Live Terminal Console</span>
+      </button>
+      <button class="step-btn" onclick="goToFeature(5)">
+        <span class="step-num">ĐIỂM SỐ 06</span>
+        <span class="step-label" data-i18n="f6_nav">Git Violation Diff Viewer</span>
+      </button>
+      <button class="step-btn" onclick="goToFeature(6)">
+        <span class="step-num">ĐIỂM SỐ 07</span>
+        <span class="step-label" data-i18n="f7_nav">Chủ đề Tư Bản Phố Wall</span>
+      </button>
+      <button class="step-btn" onclick="goToFeature(7)">
+        <span class="step-num">ĐIỂM SỐ 08</span>
+        <span class="step-label" data-i18n="f8_nav">Giao diện Sáng (Daylight)</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ======================================================================
+       SPOTLIGHT THEATER (VISUAL ILLUMINATOR)
+       ====================================================================== -->
+  <div class="spotlight-theater-wrap">
+    <div class="spotlight-theater">
+      <!-- Theater Bar -->
+      <div class="theater-header-bar">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#10B981; box-shadow:0 0 8px #10B981;"></span>
+          <span style="font-weight:700; font-family:'JetBrains Mono',monospace;" id="theaterStatusText">CHẾ ĐỘ CHIẾU RỌI TÍNH NĂNG (SPOTLIGHT ACTIVE)</span>
+        </div>
+
+        <div style="display:flex; align-items:center; gap:10px;">
+          <button class="btn-toggle" style="padding:4px 10px; font-size:11px;" onclick="openZoomModal()">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="11" y1="8" x2="11" y2="14"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
+            <span data-i18n="btn_zoom">Phóng to ảnh 100%</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Viewport with Image, Spotlight Beam, and Floating Callout Card -->
+      <div class="theater-canvas-viewport" id="theaterViewport">
+        <!-- Real Captured Screenshot -->
+        <img src="./tutorial_assets/01_full_studio_overview.png" alt="Gemini Workflow Studio Real Capture" class="real-screenshot-img" id="stageImage">
+
+        <!-- Animated Spotlight Box (Box-shadow cutout) -->
+        <div class="spotlight-beam-box" id="spotlightBeam"></div>
+
+        <!-- Floating Callout Card (Detailed Guidance) -->
+        <div class="spotlight-callout-card" id="calloutCard">
+          <div class="callout-badge" id="calloutBadge">TÍNH NĂNG 01 / 08</div>
+          <h3 class="callout-title" id="calloutTitle">Toàn Cảnh Gemini Workflow Studio (Enterprise Orchestrator)</h3>
+          <p class="callout-desc" id="calloutDesc">
+            Giao diện làm việc toàn diện tích hợp bảng vẽ React Flow Canvas, thanh bên chứa 7 Agent doanh nghiệp, khung Inspector quản lý quyền hạn tệp (Allowed Paths), và cửa sổ Live Terminal streaming theo thời gian thực.
+          </p>
+
+          <div class="callout-takeaways" id="calloutTakeaways">
+            <!-- Rendered by JS -->
+          </div>
+
+          <div class="callout-footer-btns">
+            <div class="tour-indicator-dots" id="tourDots">
+              <!-- Dots rendered by JS -->
+            </div>
+
+            <div style="display:flex; align-items:center; gap:8px;">
+              <button class="btn-toggle" style="padding:4px 10px; font-size:11px;" onclick="prevFeature()">← Trước</button>
+              <button class="btn-toggle btn-primary" style="padding:4px 12px; font-size:11px;" onclick="nextFeature()" id="btnCalloutNext">Tiếp →</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================================================
+       ENTERPRISE CHEAT SHEET SECTION
+       ====================================================================== -->
+  <section class="cheatsheet-section">
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;">
+      <div>
+        <h3 style="font-size:18px; font-weight:800;" data-i18n="cheat_title">Bảng Tra Cứu Nhanh & Mẹo Năng Suất (Quick Reference)</h3>
+        <p style="font-size:12px; color:var(--text-muted);" data-i18n="cheat_sub">Nắm vững các phím tắt và cơ chế cốt lõi để vận hành hệ sinh thái đa đại lý hiệu quả nhất.</p>
+      </div>
+      <span class="badge-pill" data-i18n="cheat_badge">ENTERPRISE BEST PRACTICES</span>
+    </div>
+
+    <div class="cheatsheet-grid">
+      <div class="cheatsheet-card">
+        <h4>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--accent-blue);"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+          <span data-i18n="c1_title">Nguyên Tắc Khóa Tệp Allowed Paths</span>
+        </h4>
+        <p data-i18n="c1_desc">Luôn khóa vùng file cho từng Agent (ví dụ: Frontend chỉ được sửa <code>frontend/src/**</code>). Bất kỳ hành vi can thiệp trái phép nào ra bên ngoài đều bị Git Auditor chặn đứng ngay tức khắc.</p>
+      </div>
+
+      <div class="cheatsheet-card">
+        <h4>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--accent-gold);"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+          <span data-i18n="c2_title">Nhân Vật Chibi 3D & Truyền Lệnh</span>
+        </h4>
+        <p data-i18n="c2_desc">Các node không bị bó buộc trong khung card chữ nhật mà là nhân vật game 3D sống động. Khi Vua phát lệnh chạy, Sứ giả Chibi sẽ thực sự phi nước đại sang node kế tiếp để chuyển giao Thánh chỉ!</p>
+      </div>
+
+      <div class="cheatsheet-card">
+        <h4>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--accent-emerald);"><polyline points="20 6 9 17 4 12"></polyline></svg>
+          <span data-i18n="c3_title">Giải Quyết Xung Đột Bằng Git Diff</span>
+        </h4>
+        <p data-i18n="c3_desc">Không cần gõ lệnh Git terminal phức tạp. Với bảng Diff Viewer tích hợp, bạn có thể hoàn tác ngay lập tức các tệp Agent sửa nhầm hoặc cấp quyền đặc cách bằng một cú nhấp chuột.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Full-Res Zoom Modal -->
+  <div class="zoom-modal" id="zoomModal" onclick="closeZoomModal()">
+    <img src="" alt="Full Resolution Capture" class="zoom-modal-img" id="zoomModalImg">
+  </div>
+
+  <!-- Footer -->
+  <footer class="tutorial-footer">
+    <div>
+      <span>Gemini Workflow Studio — Enterprise Multi-Agent Orchestrator</span>
+    </div>
+    <div style="font-family:'JetBrains Mono',monospace; font-weight:700; color:var(--accent-gold);">
+      Copyright by phamanh.bac
+    </div>
+  </footer>
+
+  <!-- ======================================================================
+       INTERACTIVE JAVASCRIPT ENGINE (SPOTLIGHT & BILINGUAL TOUR)
+       ====================================================================== -->
+  <script>
+    // 1. DATA REPOSITORY: 8 SPOTLIGHT STEPS WITH REAL SCREENSHOTS & COORDINATES
+    const SPOTLIGHT_FEATURES = [
+      {
+        id: 0,
+        image: './tutorial_assets/01_full_studio_overview.png',
+        spotlight: { top: '3%', left: '2%', width: '96%', height: '94%' },
+        calloutPos: { top: '15%', right: '5%' },
+        titleVi: "Tổng Quan Gemini Workflow Studio",
+        titleEn: "Studio Full Workspace Overview",
+        badgeVi: "ĐIỂM SỐ 01 / 08 — KHÔNG GIAN LÀM VIỆC",
+        badgeEn: "SPOTLIGHT 01 / 08 — WORKSPACE OVERVIEW",
+        descVi: "Cái nhìn toàn diện về Gemini Workflow Studio với 4 phân vùng chính: Thanh Sidebar bên trái (Thư viện Agent & Mẫu SDLC), Bảng vẽ Canvas trung tâm (Các nhân vật Chibi 3D), Khung Inspector cấu hình tệp bên phải và Cửa sổ Live Terminal thời gian thực bên dưới.",
+        descEn: "Comprehensive view of Gemini Workflow Studio comprising 4 primary zones: Left Sidebar (Agent Library & SDLC Templates), Center Canvas (3D Living Chibis), Right Inspector (File Scope Governance), and Bottom Live Terminal.",
+        takeawaysVi: [
+          "Bố cục 3 cột chuẩn Studio phần mềm chuyên nghiệp.",
+          "Toàn bộ Agent kết nối tạo thành đồ thị DAG hoàn chỉnh.",
+          "Hỗ trợ chế độ Mock giả lập và Backend WebSocket thật."
+        ],
+        takeawaysEn: [
+          "Standard enterprise 3-column studio layout.",
+          "All specialized agents wire into an end-to-end DAG.",
+          "Supports offline Mock mode and live FastAPI backend."
+        ]
+      },
+      {
+        id: 1,
+        image: './tutorial_assets/01_full_studio_overview.png',
+        spotlight: { top: '6%', left: '0%', width: '16.5%', height: '94%' },
+        calloutPos: { top: '12%', left: '19%' },
+        titleVi: "Thư Viện 7 Agent & Mẫu Quy Trình (1-Click)",
+        titleEn: "7-Agent Library & 1-Click SDLC Templates",
+        badgeVi: "ĐIỂM SỐ 02 / 08 — THANH BÊN TRÁI",
+        badgeEn: "SPOTLIGHT 02 / 08 — LEFT SIDEBAR",
+        descVi: "Thanh bên trái chứa đầy đủ 7 Agent chuyên trách: Product Owner (Vua), Kiến trúc sư (Quân sư), Database, Backend (Quan võ), Frontend, QA (Ngự sử), và Security (Cẩm y vệ). Bạn chỉ việc kéo thả lên Canvas hoặc bấm nạp nhanh Full-Stack SDLC Template.",
+        descEn: "Houses 7 specialized SDLC agents: Product Owner (Emperor), Architect (Strategist), Database, Backend (General), Frontend, QA (Inspector), and Security (Guard). Drag onto canvas or 1-click load full SDLC templates.",
+        takeawaysVi: [
+          "Kéo và thả trực tiếp để bổ sung Agent vào đồ thị.",
+          "Nút nạp nhanh sơ đồ công ty phần mềm Full-Stack SDLC.",
+          "Dòng chữ bản quyền 'Copyright by phamanh.bac' trang trọng."
+        ],
+        takeawaysEn: [
+          "Drag & drop directly to spawn new agent nodes.",
+          "1-Click Full-Stack SDLC pipeline pre-wiring.",
+          "Exclusive 'Copyright by phamanh.bac' branding in footer."
+        ]
+      },
+      {
+        id: 2,
+        image: './tutorial_assets/01_full_studio_overview.png',
+        spotlight: { top: '7%', left: '17%', width: '63%', height: '67%' },
+        calloutPos: { top: '12%', right: '23%' },
+        titleVi: "Bảng Vẽ Canvas & Nhân Vật Chibi 3D Sống Động",
+        titleEn: "Flow Canvas & 3D Living Chibis",
+        badgeVi: "ĐIỂM SỐ 03 / 08 — BẢNG VẼ TRUNG TÂM",
+        badgeEn: "SPOTLIGHT 03 / 08 — CENTER CANVAS",
+        descVi: "Các Node được thiết kế tối giản không viền! Mỗi node là một nhân vật Game Chibi 3D sống động có khả năng Đi dạo khi rảnh, Ngồi uống trà khi chờ việc, và Chạy xung trận khi thực thi. Khi Vua chạy, một Sứ giả Chibi cầm Thánh chỉ (📜) sẽ phi nhanh sang node kế tiếp truyền lệnh!",
+        descEn: "Nodes are frameless game entities! Each node is a living 3D Chibi capable of walking when idle, sitting to drink tea when waiting, and sprinting when running. When the King runs, an animated courier rushes across to deliver the Mandate (📜)!",
+        takeawaysVi: [
+          "Thẻ chữ trên đầu: Tên RPG, Danh hiệu và Bong bóng thoại.",
+          "Vòng hào quang ma pháp phát sáng xoay tròn dưới chân khi chọn.",
+          "Sứ giả phi nước đại truyền lệnh trực tiếp sang node kế tiếp."
+        ],
+        takeawaysEn: [
+          "Overhead tags: RPG nameplate, guild title, and comic speech bubble.",
+          "Rotating magical selection circle beneath character's feet.",
+          "Messenger courier sprinting across the wire to deliver mandates."
+        ]
+      },
+      {
+        id: 3,
+        image: './tutorial_assets/01_full_studio_overview.png',
+        spotlight: { top: '7%', left: '80.5%', width: '19.5%', height: '67%' },
+        calloutPos: { top: '12%', left: '42%' },
+        titleVi: "Khung Inspector & Vùng Khóa Tệp Allowed Paths",
+        titleEn: "Node Inspector & Allowed Paths Lockdown",
+        badgeVi: "ĐIỂM SỐ 04 / 08 — KHUNG CẤU HÌNH",
+        badgeEn: "SPOTLIGHT 04 / 08 — RIGHT INSPECTOR",
+        descVi: "Khi bấm chọn node, khung Inspector bên phải sẽ mở ra cho phép cấu hình chi tiết: Quản lý Allowed Paths (danh sách thư mục khóa an toàn), tùy biến System Prompt, Task Prompt và bật Cổng phê duyệt nhân sự (Human Approval Gate).",
+        descEn: "Selecting any node opens the right inspector: manage Allowed Paths directory whitelist, customize System & Task Prompts, and enable Human Approval Gates before execution.",
+        takeawaysVi: [
+          "Khóa tệp nghiêm ngặt: Frontend không bao giờ được sửa backend/.",
+          "Tùy chỉnh Prompt linh hoạt cho từng phòng ban chuyên trách.",
+          "Nút kiểm tra thử nghiệm 'Simulate Scope Violation' tích hợp."
+        ],
+        takeawaysEn: [
+          "Strict file sandboxing: Frontend never touches backend/ code.",
+          "Modular prompts tailored for each engineering role.",
+          "Built-in 'Simulate Scope Violation' test trigger button."
+        ]
+      },
+      {
+        id: 4,
+        image: './tutorial_assets/01_full_studio_overview.png',
+        spotlight: { top: '74%', left: '17%', width: '83%', height: '26%' },
+        calloutPos: { top: '25%', left: '26%' },
+        titleVi: "Live Terminal & Truyền Phát WebSocket Log",
+        titleEn: "Live Terminal & Real-Time Log Streaming",
+        badgeVi: "ĐIỂM SỐ 05 / 08 — CỬA SỔ LỆNH",
+        badgeEn: "SPOTLIGHT 05 / 08 — LIVE TERMINAL",
+        descVi: "Cửa sổ Live Terminal bên dưới tự động cuộn hiển thị từng dòng stdout, stderr và sự kiện điều phối DAG thời gian thực. Tích hợp bộ lọc luồng (All, Stdout, Stderr, System) và nút thu phóng kích thước thuận tiện.",
+        descEn: "Bottom Live Terminal auto-scrolls showing stdout, stderr, and DAG events in real time. Features stream filters (All, Stdout, Stderr, System) and resizable terminal height modes.",
+        takeawaysVi: [
+          "Kết nối WebSocket truyền tải tức thì sự kiện từ máy chủ.",
+          "Bộ lọc thông minh giúp phân biệt lỗi (stderr) và nhật ký chuẩn.",
+          "Ghi nhận chính xác mã băm Git snapshot trước và sau khi chạy."
+        ],
+        takeawaysEn: [
+          "WebSocket engine streams backend events with zero latency.",
+          "Smart filter tabs isolate error traces from standard output.",
+          "Audits Git commit hashes before and after execution."
+        ]
+      },
+      {
+        id: 5,
+        image: './tutorial_assets/06_git_violation_modal.png',
+        spotlight: { top: '12%', left: '26%', width: '48%', height: '76%' },
+        calloutPos: { top: '15%', right: '3%' },
+        titleVi: "Hộp Thoại Cảnh Báo Vi Phạm Git & Diff Viewer",
+        titleEn: "Git Scope Violation Alert & Diff Viewer",
+        badgeVi: "ĐIỂM SỐ 06 / 08 — BẢO VỆ MÃ NGUỒN",
+        badgeEn: "SPOTLIGHT 06 / 08 — GIT AUDITOR",
+        descVi: "Khi một Agent can thiệp vào các tệp ngoài Allowed Paths (ví dụ Frontend sửa backend/main.py), hộp thoại cảnh báo sẽ bật lên cùng trình xem Diff trực quan. Dòng xanh thêm mới (+) và dòng đỏ xóa (-) giúp Tech Lead phát hiện sai phạm lập tức.",
+        descEn: "When an agent drifts outside Allowed Paths (e.g. Frontend edits backend/main.py), this alert pops up with a unified Diff Viewer. Green additions (+) and red deletions (-) reveal unauthorized edits immediately.",
+        takeawaysVi: [
+          "Khôi phục 1-Click: Bấm 'Revert' để tự hoàn tác các tệp sai và chạy tiếp.",
+          "Chấp nhận ngoại lệ: Bấm 'Allow' nếu thay đổi là cần thiết cho dự án.",
+          "Bảo vệ 100% kho mã nguồn không bị hỏng hóc hay xung đột."
+        ],
+        takeawaysEn: [
+          "1-Click Revert: Discards unauthorized files and resumes pipeline safely.",
+          "Allow Exception: Grants temporary bypass if modifications are valid.",
+          "100% protects repository integrity from rogue agent code drifts."
+        ]
+      },
+      {
+        id: 6,
+        image: './tutorial_assets/07_capitalist_skin.png',
+        spotlight: { top: '7%', left: '17%', width: '83%', height: '67%' },
+        calloutPos: { top: '12%', left: '20%' },
+        titleVi: "Chủ Đề Chibi Tư Bản Phố Wall (Wall St Capitalists)",
+        titleEn: "Wall Street Capitalist Chibi Theme",
+        badgeVi: "ĐIỂM SỐ 07 / 08 — CHỦ ĐỀ CHIBI",
+        badgeEn: "SPOTLIGHT 07 / 08 — CHIBI THEMES",
+        descVi: "Chuyển sang phong cách Tư Bản: Hoàng Thượng biến thành Big Boss CEO với mũ phớt Top Hat, xì gà và kính một tròng; Thủ kho trở thành CFO Banker mang vali đầy tiền đô la ($); Quan võ trở thành Quant Trader với tai nghe giao dịch!",
+        descEn: "Switching to Capitalist theme: Emperor transforms into Big Boss CEO with top hat, monocle, and cigar; Treasurer becomes CFO Banker with cash briefcase; Backend turns into Quant Trader with trading headset!",
+        takeawaysVi: [
+          "4 bộ giao diện phong phú: Phong kiến, Tư bản, Công ty, Cyberpunk.",
+          "Lời thoại và danh hiệu thay đổi sống động theo từng chủ đề.",
+          "Trang phục và vật phẩm cầm tay được vẽ chi tiết tinh xảo."
+        ],
+        takeawaysEn: [
+          "4 distinct themes: Feudal, Capitalist, Corporate, Cyberpunk.",
+          "Living dialogues and titles dynamically adapt per theme.",
+          "Handcrafted costumes, accessories, and action props."
+        ]
+      },
+      {
+        id: 7,
+        image: './tutorial_assets/08_light_mode.png',
+        spotlight: { top: '0%', left: '0%', width: '100%', height: '100%' },
+        calloutPos: { top: '15%', right: '5%' },
+        titleVi: "Chế Độ Giao Diện Sáng (Daylight Mode)",
+        titleEn: "Daylight Theme & Bilingual Engine",
+        badgeVi: "ĐIỂM SỐ 08 / 08 — GIAO DIỆN SÁNG",
+        badgeEn: "SPOTLIGHT 08 / 08 — LIGHT THEME",
+        descVi: "Chuyển đổi tức thì sang giao diện ban ngày với tông màu giấy trắng trang nhã, tương phản cao, dịu mắt và chuẩn công thái học. Hệ thống tự động ghi nhớ tùy chọn giao diện và ngôn ngữ của bạn trong LocalStorage.",
+        descEn: "Instantly switch to high-contrast daylight theme with paper-white surfaces and ergonomic typography. System persists your theme and language preferences across sessions.",
+        takeawaysVi: [
+          "Nút chuyển đổi Sáng/Tối 1-Click trên thanh Header.",
+          "Hỗ trợ song ngữ hoàn hảo giữa Tiếng Việt và Tiếng Anh.",
+          "Tự động lưu trạng thái tùy biến cho các phiên làm việc sau."
+        ],
+        takeawaysEn: [
+          "1-Click Dark/Light toggle located right in the header bar.",
+          "Seamless bilingual toggle between English and Vietnamese.",
+          "Persists preferences automatically in browser storage."
+        ]
+      }
+    ];
+
+    // 2. STATE REPOSITORY
+    let currentFeatureIdx = 0;
+    let currentLang = 'vi';
+    let currentTheme = 'dark';
+    let isAutoTourRunning = false;
+    let autoTourTimer = null;
+
+    // 3. RENDER FEATURE SPOTLIGHT
+    function renderFeature(idx) {
+      currentFeatureIdx = idx;
+      const feat = SPOTLIGHT_FEATURES[idx];
+
+      // Update Stepper Nav
+      document.querySelectorAll('.step-btn').forEach((btn, i) => {
+        btn.classList.toggle('active', i === idx);
+      });
+
+      // Update Screenshot Image
+      const stageImg = document.getElementById('stageImage');
+      stageImg.src = feat.image;
+
+      // Update Spotlight Beam Position & Size
+      const beam = document.getElementById('spotlightBeam');
+      beam.style.top = feat.spotlight.top;
+      beam.style.left = feat.spotlight.left;
+      beam.style.width = feat.spotlight.width;
+      beam.style.height = feat.spotlight.height;
+
+      // Update Callout Card Position
+      const card = document.getElementById('calloutCard');
+      card.style.top = feat.calloutPos.top || 'auto';
+      card.style.left = feat.calloutPos.left || 'auto';
+      card.style.right = feat.calloutPos.right || 'auto';
+      card.style.bottom = feat.calloutPos.bottom || 'auto';
+
+      // Update Text Content based on language
+      document.getElementById('calloutBadge').textContent = currentLang === 'vi' ? feat.badgeVi : feat.badgeEn;
+      document.getElementById('calloutTitle').textContent = currentLang === 'vi' ? feat.titleVi : feat.titleEn;
+      document.getElementById('calloutDesc').textContent = currentLang === 'vi' ? feat.descVi : feat.descEn;
+
+      // Render Takeaways
+      const takeawaysList = currentLang === 'vi' ? feat.takeawaysVi : feat.takeawaysEn;
+      document.getElementById('calloutTakeaways').innerHTML = takeawaysList.map(item => `
+        <div class="callout-takeaway-item">
+          <svg class="callout-check-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+          <span>${item}</span>
+        </div>
+      `).join('');
+
+      // Update Dots
+      renderDots();
+
+      // Update Next Button label
+      const nextBtn = document.getElementById('btnCalloutNext');
+      if (idx === SPOTLIGHT_FEATURES.length - 1) {
+        nextBtn.textContent = currentLang === 'vi' ? 'Hoàn tất 🎉' : 'Done 🎉';
+      } else {
+        nextBtn.textContent = currentLang === 'vi' ? 'Tiếp →' : 'Next →';
+      }
+    }
+
+    function renderDots() {
+      const container = document.getElementById('tourDots');
+      container.innerHTML = SPOTLIGHT_FEATURES.map((_, i) => `
+        <div class="dot ${i === currentFeatureIdx ? 'active' : ''}" onclick="goToFeature(${i})" title="Điểm ${i + 1}"></div>
+      `).join('');
+    }
+
+    function goToFeature(idx) {
+      renderFeature(idx);
+    }
+
+    function nextFeature() {
+      if (currentFeatureIdx < SPOTLIGHT_FEATURES.length - 1) {
+        goToFeature(currentFeatureIdx + 1);
+      } else {
+        goToFeature(0);
+      }
+    }
+
+    function prevFeature() {
+      if (currentFeatureIdx > 0) {
+        goToFeature(currentFeatureIdx - 1);
+      } else {
+        goToFeature(SPOTLIGHT_FEATURES.length - 1);
+      }
+    }
+
+    // 4. AUTO TOUR ENGINE
+    function toggleAutoTour() {
+      isAutoTourRunning = !isAutoTourRunning;
+      const btn = document.getElementById('autoTourBtn');
+      const label = document.getElementById('autoTourLabel');
+
+      if (isAutoTourRunning) {
+        btn.classList.add('btn-primary');
+        label.textContent = currentLang === 'vi' ? 'Đang chạy Tour...' : 'Tour Running...';
+        document.getElementById('playIcon').innerHTML = `<rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect>`;
+        
+        autoTourTimer = setInterval(() => {
+          nextFeature();
+        }, 5000);
+      } else {
+        btn.classList.remove('btn-primary');
+        label.textContent = currentLang === 'vi' ? 'Tự động chiếu Tour' : 'Auto-Play Tour';
+        document.getElementById('playIcon').innerHTML = `<polygon points="5 3 19 12 5 21 5 3"></polygon>`;
+        clearInterval(autoTourTimer);
+      }
+    }
+
+    // 5. BILINGUAL I18N
+    const I18N_LABELS = {
+      vi: {
+        badge_studio: "PLAYWRIGHT SPOTLIGHT TOUR",
+        btn_auto_tour: "Tự động chiếu Tour",
+        btn_open_app: "Vào Studio",
+        hero_eyebrow: "PLAYWRIGHT VISUAL SPOTLIGHT TOUR",
+        hero_title: "Hướng Dẫn Trực Quan Chiếu Rọi Tính Năng (Spotlight Tutorial)",
+        hero_desc: "Toàn bộ ảnh chụp màn hình độ phân giải cao được tự động ghi lại bằng Playwright từ phiên bản thực tế của ứng dụng. Mỗi bước giới thiệu sẽ chiếu rọi và làm sáng bừng phân vùng tính năng tương ứng kèm hướng dẫn chuyên sâu.",
+        
+        f1_nav: "Tổng quan Studio",
+        f2_nav: "Thư viện Agent & SDLC",
+        f3_nav: "Bảng vẽ & Chibi 3D",
+        f4_nav: "Allowed Paths & Cấu hình",
+        f5_nav: "Live Terminal Console",
+        f6_nav: "Git Violation Diff Viewer",
+        f7_nav: "Chủ đề Tư Bản Phố Wall",
+        f8_nav: "Giao diện Sáng (Daylight)",
+
+        btn_zoom: "Phóng to ảnh 100%",
+
+        cheat_title: "Bảng Tra Cứu Nhanh & Mẹo Năng Suất (Quick Reference)",
+        cheat_sub: "Nắm vững các phím tắt và cơ chế cốt lõi để vận hành hệ sinh thái đa đại lý hiệu quả nhất.",
+        cheat_badge: "ENTERPRISE BEST PRACTICES",
+        c1_title: "Nguyên Tắc Khóa Tệp Allowed Paths",
+        c1_desc: "Luôn khóa vùng file cho từng Agent (ví dụ: Frontend chỉ được sửa frontend/src/**). Bất kỳ hành vi can thiệp trái phép nào ra bên ngoài đều bị Git Auditor chặn đứng ngay tức khắc.",
+        c2_title: "Nhân Vật Chibi 3D & Truyền Lệnh",
+        c2_desc: "Các node không bị bó buộc trong khung card chữ nhật mà là nhân vật game 3D sống động. Khi Vua phát lệnh chạy, Sứ giả Chibi sẽ thực sự phi nước đại sang node kế tiếp để chuyển giao Thánh chỉ!",
+        c3_title: "Giải Quyết Xung Đột Bằng Git Diff",
+        c3_desc: "Không cần gõ lệnh Git terminal phức tạp. Với bảng Diff Viewer tích hợp, bạn có thể hoàn tác ngay lập tức các tệp Agent sửa nhầm hoặc cấp quyền đặc cách bằng một cú nhấp chuột."
+      },
+      en: {
+        badge_studio: "PLAYWRIGHT SPOTLIGHT TOUR",
+        btn_auto_tour: "Auto-Play Tour",
+        btn_open_app: "Launch Studio",
+        hero_eyebrow: "PLAYWRIGHT VISUAL SPOTLIGHT TOUR",
+        hero_title: "Visual Spotlight Tutorial & Interactive Guide",
+        hero_desc: "High-resolution real screenshots captured automatically via Playwright from the live application. Each feature spotlight dynamically illuminates the target interface area with deep engineering walkthroughs.",
+        
+        f1_nav: "Studio Overview",
+        f2_nav: "Agent Library & SDLC",
+        f3_nav: "Flow Canvas & 3D Chibis",
+        f4_nav: "Allowed Paths Inspector",
+        f5_nav: "Live Terminal Console",
+        f6_nav: "Git Violation Diff Viewer",
+        f7_nav: "Wall St Capitalist Skin",
+        f8_nav: "Daylight Theme Mode",
+
+        btn_zoom: "Zoom Full Resolution",
+
+        cheat_title: "Quick Reference & Operating Principles",
+        cheat_sub: "Core engineering guardrails ensuring seamless multi-agent orchestration without merge conflicts.",
+        cheat_badge: "ENTERPRISE BEST PRACTICES",
+        c1_title: "Zero Trust File Scoping",
+        c1_desc: "Always sandbox each agent to write strictly within its designated folder (e.g. Frontend only modifies frontend/src/**). Any drift is caught instantly by the Git Auditor.",
+        c2_title: "Living 3D Chibis & Mandate Relay",
+        c2_desc: "Nodes are frameless game entities. When the King runs, an animated courier rushes across the connection wire to deliver the Imperial Mandate!",
+        c3_title: "1-Click Diff Resolution",
+        c3_desc: "No complicated git command lines needed. Inspect additions and deletions via the unified diff viewer and revert rogue files with one click."
+      }
+    };
+
+    function toggleLanguage() {
+      currentLang = currentLang === 'vi' ? 'en' : 'vi';
+      document.getElementById('langLabel').textContent = currentLang === 'vi' ? 'VI / EN' : 'EN / VI';
+      document.documentElement.setAttribute('data-lang', currentLang);
+
+      // Translate all data-i18n elements
+      const dict = I18N_LABELS[currentLang];
+      document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        if (dict[key]) el.innerHTML = dict[key];
+      });
+
+      // Update Stepper Nav Labels
+      document.querySelectorAll('.step-btn').forEach((btn, idx) => {
+        const labelEl = btn.querySelector('.step-label');
+        if (labelEl && dict[`f${idx + 1}_nav`]) {
+          labelEl.textContent = dict[`f${idx + 1}_nav`];
+        }
+      });
+
+      renderFeature(currentFeatureIdx);
+    }
+
+    function toggleTheme() {
+      currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', currentTheme);
+      document.getElementById('themeLabel').textContent = currentTheme === 'dark' ? 'Tối' : 'Sáng';
+    }
+
+    // 6. ZOOM MODAL
+    function openZoomModal() {
+      const modal = document.getElementById('zoomModal');
+      const img = document.getElementById('zoomModalImg');
+      img.src = SPOTLIGHT_FEATURES[currentFeatureIdx].image;
+      modal.classList.add('active');
+    }
+
+    function closeZoomModal() {
+      document.getElementById('zoomModal').classList.remove('active');
+    }
+
+    // INITIALIZATION
+    window.addEventListener('DOMContentLoaded', () => {
+      renderFeature(0);
+    });
+  </script>
+</body>
+</html>

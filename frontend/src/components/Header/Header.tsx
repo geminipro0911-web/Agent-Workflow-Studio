@@ -18,6 +18,7 @@ import {
   Building2,
   Zap,
   FolderGit2,
+  BookOpen,
 } from 'lucide-react';
 import { useThemeLanguage } from '../../context/ThemeLanguageContext';
 import { NodeSkinTheme } from '../../types/skins';
@@ -396,6 +397,18 @@ export const Header: React.FC<HeaderProps> = ({
             <Moon className="w-4 h-4 text-indigo-600 hover:-rotate-12 transition duration-200" />
           )}
         </button>
+
+        {/* Interactive Tutorial & User Guide Link */}
+        <a
+          href="/tutorial.html"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-semibold bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800/60 hover:bg-blue-100 dark:hover:bg-blue-900/40 transition shrink-0 shadow-sm"
+          title={language === 'vi' ? 'Mở Hướng dẫn sử dụng tương tác (Tutorial)' : 'Open Interactive Tutorial & Guide'}
+        >
+          <BookOpen className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+          <span className="hidden xl:inline">{language === 'vi' ? 'Hướng dẫn' : 'Guide'}</span>
+        </a>
       </div>
     </header>
   );
