@@ -8,6 +8,7 @@ import {
   RotateCcw,
 } from 'lucide-react';
 import { NodeExecutionStatus, ViolationData } from '../../types';
+import { NodeSkinTheme } from '../../types/skins';
 import { useThemeLanguage } from '../../context/ThemeLanguageContext';
 import { ChibiAvatar3D, ChibiAction } from './ChibiAvatar3D';
 import { NODE_SKINS } from '../../services/skinThemes';
@@ -34,10 +35,27 @@ export interface AgentNodeData {
 }
 
 export const AgentNode = memo(({ data, selected }: NodeProps) => {
-  const { nodeSkin, language, t } = useThemeLanguage();
+  const { nodeSkin: contextSkin, language, t } = useThemeLanguage();
   const nodeData = data as AgentNodeData;
+  // Support nodeSkin from both nodeData (passed via FlowCanvas flowNodes) and Context
+  const nodeSkin: NodeSkinTheme = (nodeData.nodeSkin as NodeSkinTheme) || contextSkin || 'feudal';
   const status = nodeData.status || 'idle';
-  const presetKey = (nodeData.preset_id || 'backend').toLowerCase();
+
+  // Intelligent preset key resolver (handles PM, Architect, Database, Backend, Frontend, QA, Security)
+  const resolvePresetKey = (presetId?: string, roleName?: string): string => {
+    const p = (presetId || '').toLowerCase();
+    const r = (roleName || '').toLowerCase();
+    if (p === 'database' || r.includes('database') || r.includes('db') || r.includes('sql') || r.includes('cơ sở dữ liệu')) return 'database';
+    if (p === 'backend' || r.includes('backend') || r.includes('server')) return 'backend';
+    if (p === 'frontend' || r.includes('frontend') || r.includes('giao diện') || r.includes('ui')) return 'frontend';
+    if (p === 'architect' || r.includes('architect') || r.includes('kiến trúc')) return 'architect';
+    if (p === 'qa' || r.includes('qa') || r.includes('test') || r.includes('kiểm thử')) return 'qa';
+    if (p === 'security' || r.includes('sec') || r.includes('an ninh') || r.includes('bảo mật') || r.includes('audit')) return 'security';
+    if (p === 'pm' || r.includes('product') || r.includes('quản lý sản phẩm') || r.includes('(ba)') || r.includes('business analyst') || /\bpm\b/.test(r)) return 'pm';
+    return p || 'backend';
+  };
+
+  const presetKey = resolvePresetKey(nodeData.preset_id, nodeData.role_name);
 
   // Manual interactive action override (Đi, Ngồi, Chạy)
   const [manualAction, setManualAction] = useState<ChibiAction | null>(null);
@@ -46,11 +64,16 @@ export const AgentNode = memo(({ data, selected }: NodeProps) => {
   const currentSkinDef = NODE_SKINS[nodeSkin] || NODE_SKINS.corporate;
   const themedRole = currentSkinDef.roles[presetKey] || currentSkinDef.roles['backend'];
 
-  // Display Titles: Show the specific pipeline role (e.g. System Architect, Canvas Game Dev)
-  const displayTitle = nodeData.role_name || (language === 'vi' ? themedRole?.themeTitleVi : themedRole?.themeTitleEn);
-  const displaySubtitle =
-    language === 'vi' ? themedRole?.themeTitleVi || themedRole?.subtitleVi : themedRole?.themeTitleEn || themedRole?.subtitleEn;
+  // Themed Role title from active skin
+  const themeTitle = language === 'vi' ? themedRole?.themeTitleVi : themedRole?.themeTitleEn;
+  const themeSubtitle = language === 'vi' ? themedRole?.subtitleVi : themedRole?.subtitleEn;
   const displayBadge = language === 'vi' ? themedRole?.badgeVi : themedRole?.badgeEn;
+
+  // Primary RPG character name displayed on the nameplate
+  const characterName = themeTitle || nodeData.role_name;
+
+  // Secondary descriptive subtitle or technical role
+  const secondaryTitle = nodeData.role_name || themeSubtitle;
 
   const colorTheme = themedRole?.primaryColor || nodeData.color_theme || '#3b82f6';
   const hasViolation = status === 'violation_paused';
@@ -185,21 +208,52 @@ export const AgentNode = memo(({ data, selected }: NodeProps) => {
           </div>
         </div>
 
-        {/* RPG Character Nameplate (Tên nhân vật như trong game) */}
-        <div className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg bg-black/85 dark:bg-black/90 text-white border border-amber-500/60 shadow-md backdrop-blur-sm pointer-events-auto">
+        {/* RPG Character Nameplate (Tên nhân vật theo theme: Vua, CEO, Commander...) */}
+        <div
+          data-testid="rpg-character-nameplate"
+          className={`flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg text-white shadow-md backdrop-blur-sm pointer-events-auto border transition-all duration-300 ${
+            nodeSkin === 'feudal'
+              ? 'bg-gradient-to-r from-amber-950/90 to-yellow-950/90 border-amber-500/70 shadow-amber-900/40'
+              : nodeSkin === 'capitalist'
+              ? 'bg-gradient-to-r from-emerald-950/90 to-slate-950/90 border-emerald-500/70 shadow-emerald-900/40'
+              : nodeSkin === 'cyberpunk'
+              ? 'bg-gradient-to-r from-fuchsia-950/90 to-cyan-950/90 border-cyan-400/70 shadow-cyan-900/40'
+              : 'bg-gradient-to-r from-slate-900/90 to-blue-950/90 border-blue-500/60 shadow-blue-900/40'
+          }`}
+        >
           {displayBadge && (
-            <span className="text-[9px] font-bold text-amber-300 font-mono uppercase bg-amber-500/20 px-1 py-0.2 rounded border border-amber-500/40">
+            <span
+              className={`text-[9px] font-bold font-mono uppercase px-1 py-0.2 rounded border transition-colors duration-300 ${
+                nodeSkin === 'feudal'
+                  ? 'bg-amber-500/20 text-amber-300 border-amber-500/40'
+                  : nodeSkin === 'capitalist'
+                  ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
+                  : nodeSkin === 'cyberpunk'
+                  ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/40'
+                  : 'bg-blue-500/20 text-blue-300 border-blue-500/40'
+              }`}
+            >
               {displayBadge}
             </span>
           )}
           <span className="text-xs font-black tracking-wide text-white drop-shadow truncate max-w-[140px]">
-            {displayTitle}
+            {characterName}
           </span>
         </div>
 
-        {/* Guild / Function Title Tag (Chức năng / Danh hiệu game) */}
-        <div className="text-[9.5px] font-semibold text-amber-600 dark:text-amber-400/95 drop-shadow-sm font-mono truncate max-w-[170px]">
-          « {displaySubtitle} »
+        {/* Guild / Technical Role Tag (Chức năng / Vai trò SDLC) */}
+        <div
+          className={`text-[9.5px] font-semibold drop-shadow-sm font-mono truncate max-w-[170px] transition-colors duration-300 ${
+            nodeSkin === 'feudal'
+              ? 'text-amber-400'
+              : nodeSkin === 'capitalist'
+              ? 'text-emerald-400'
+              : nodeSkin === 'cyberpunk'
+              ? 'text-cyan-300'
+              : 'text-blue-400'
+          }`}
+        >
+          « {secondaryTitle} »
         </div>
 
         {/* Status Pill Badge / Action Tag */}
@@ -294,6 +348,19 @@ export const AgentNode = memo(({ data, selected }: NodeProps) => {
         <div className="relative -mt-3.5 flex items-center justify-center pointer-events-none">
           {/* Ground Contact Shadow */}
           <div className="w-16 h-4 rounded-full bg-black/35 dark:bg-black/75 blur-[2px]" />
+
+          {/* Theme Base Aura Ring Under Feet */}
+          <div
+            className={`absolute w-16 h-5 rounded-full border transition-all duration-300 ${
+              nodeSkin === 'feudal'
+                ? 'border-amber-500/50 shadow-[0_0_12px_rgba(245,158,11,0.5)]'
+                : nodeSkin === 'capitalist'
+                ? 'border-emerald-500/50 shadow-[0_0_12px_rgba(16,185,129,0.5)]'
+                : nodeSkin === 'cyberpunk'
+                ? 'border-cyan-400/60 shadow-[0_0_14px_rgba(34,211,238,0.7)]'
+                : 'border-blue-500/40 shadow-[0_0_10px_rgba(59,130,246,0.4)]'
+            }`}
+          />
 
           {/* Magical RPG Hero Selection Ring (When selected) */}
           {selected && (

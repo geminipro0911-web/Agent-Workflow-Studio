@@ -136,7 +136,7 @@ export const Header: React.FC<HeaderProps> = ({
   const SkinIcon = currentSkinOption.icon;
 
   return (
-    <header className="h-16 bg-white dark:bg-[#101726] border-b border-gray-200 dark:border-gray-800 px-3 md:px-5 flex items-center justify-between z-30 select-none shadow-md dark:shadow-xl transition-colors duration-200 gap-2 overflow-x-auto scrollbar-none">
+    <header className="h-16 bg-white dark:bg-[#101726] border-b border-gray-200 dark:border-gray-800 px-3 md:px-5 flex items-center justify-between z-30 select-none shadow-md dark:shadow-xl transition-colors duration-200 gap-2 overflow-visible">
       {/* Brand & Workflow Title */}
       <div className="flex items-center gap-3 shrink-0">
         <div className="flex items-center gap-2">
@@ -181,8 +181,9 @@ export const Header: React.FC<HeaderProps> = ({
         <div className="relative" ref={skinMenuRef}>
           <button
             type="button"
-            onClick={() => setSkinMenuOpen(!skinMenuOpen)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-amber-500/10 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-500/40 hover:bg-amber-500/20 shadow-sm transition transform active:scale-95"
+            data-testid="node-skin-switcher-btn"
+            onClick={() => setSkinMenuOpen((prev) => !prev)}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-amber-500/10 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-500/40 hover:bg-amber-500/20 shadow-sm transition transform active:scale-95 shrink-0"
             title="Chuyển đổi giao diện hiển thị các Node dạng Chibi 3D animation"
           >
             <SkinIcon className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
@@ -192,14 +193,18 @@ export const Header: React.FC<HeaderProps> = ({
             <span className="truncate max-w-[130px]">
               {language === 'vi' ? currentSkinOption.labelVi : currentSkinOption.labelEn}
             </span>
-            <ChevronDown className="w-3 h-3 opacity-70" />
+            <ChevronDown className={`w-3 h-3 opacity-70 transition-transform duration-200 ${skinMenuOpen ? 'rotate-180' : ''}`} />
           </button>
 
           {/* Skin Dropdown Menu */}
           {skinMenuOpen && (
-            <div className="absolute right-0 mt-2 w-64 rounded-2xl bg-white dark:bg-[#161F30] border border-gray-200 dark:border-gray-700 shadow-2xl py-2 z-50 animate-in fade-in zoom-in-95 duration-150">
+            <div
+              data-testid="node-skin-dropdown-menu"
+              className="absolute right-0 top-full mt-2 w-64 rounded-2xl bg-white dark:bg-[#161F30] border border-gray-200 dark:border-gray-700 shadow-2xl py-2 z-50 animate-in fade-in zoom-in-95 duration-150"
+              style={{ zIndex: 9999 }}
+            >
               <div className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between">
-                <span>Chọn Giao Diện Chibi 3D</span>
+                <span>{language === 'vi' ? 'Chọn Giao Diện Chibi 3D' : 'Select Chibi 3D Skin'}</span>
                 <Palette className="w-3.5 h-3.5 text-blue-500" />
               </div>
 
@@ -212,6 +217,7 @@ export const Header: React.FC<HeaderProps> = ({
                     <button
                       key={opt.id}
                       type="button"
+                      data-testid={`skin-option-${opt.id}`}
                       onClick={() => {
                         setNodeSkin(opt.id);
                         setSkinMenuOpen(false);

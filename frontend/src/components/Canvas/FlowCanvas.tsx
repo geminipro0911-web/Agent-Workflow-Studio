@@ -46,7 +46,7 @@ export const FlowCanvas: React.FC<FlowCanvasProps> = ({
   onAddAgentPreset,
   onLoadTemplate,
 }) => {
-  const { theme, t } = useThemeLanguage();
+  const { theme, nodeSkin, t } = useThemeLanguage();
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const { screenToFlowPosition, fitView } = useReactFlow();
 
@@ -72,10 +72,11 @@ export const FlowCanvas: React.FC<FlowCanvasProps> = ({
       ...n,
       data: {
         ...n.data,
+        nodeSkin,
         onOpenViolationModal,
       },
     }));
-  }, [nodes, onOpenViolationModal]);
+  }, [nodes, nodeSkin, onOpenViolationModal]);
 
   const flowEdges = useMemo(() => {
     return edges.map((e) => ({
