@@ -108,25 +108,31 @@ class GitScopeAuditor:
         Returns:
             Tuple[bool, Optional[str]]: (is_valid, error_message_or_none)
         """
-        if not project_dir or not os.path.exists(project_dir):
-            return False, f"Thư mục dự án không tồn tại: '{project_dir}'"
+        if not project_dir or not str(project_dir).strip():
+            return False, "Đường dẫn thư mục dự án trống."
 
-        if not os.path.isdir(project_dir):
-            return False, f"Đường dẫn dự án không phải là thư mục: '{project_dir}'"
+        cleaned = str(project_dir).strip().strip('"').strip("'").strip()
+        abs_path = os.path.abspath(cleaned)
+
+        if not os.path.exists(abs_path):
+            return False, f"Thư mục dự án không tồn tại: '{cleaned}'"
+
+        if not os.path.isdir(abs_path):
+            return False, f"Đường dẫn dự án không phải là thư mục: '{cleaned}'"
 
         # Check if git repository exists
-        code, out, err = self._run_git(project_dir, ["rev-parse", "--is-inside-work-tree"])
+        code, out, err = self._run_git(abs_path, ["rev-parse", "--is-inside-work-tree"])
         if code != 0 or out.strip() != "true":
             return False, (
-                f"Thư mục '{project_dir}' chưa được khởi tạo Git (.git). "
+                f"Thư mục '{abs_path}' chưa được khởi tạo Git (.git). "
                 "Vui lòng chạy 'git init' và tạo commit đầu tiên trước khi thực thi workflow để Git Diff Auditor có thể theo dõi thay đổi."
             )
 
         # Check if HEAD commit exists
-        code, out, err = self._run_git(project_dir, ["rev-parse", "--verify", "HEAD"])
+        code, out, err = self._run_git(abs_path, ["rev-parse", "--verify", "HEAD"])
         if code != 0:
             return False, (
-                f"Thư mục Git '{project_dir}' chưa có commit đầu tiên. "
+                f"Thư mục Git '{abs_path}' chưa có commit đầu tiên. "
                 "Vui lòng tạo ít nhất một commit ban đầu (ví dụ: 'git add . && git commit -m \"Initial commit\"') "
                 "để Git Diff Auditor có mốc so sánh (HEAD)."
             )

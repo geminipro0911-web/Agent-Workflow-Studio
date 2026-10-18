@@ -225,4 +225,11 @@ export const api = {
       body: JSON.stringify({ workspace_dir: workspaceDir }),
     });
   },
+
+  async browseWorkspace(initialDir?: string): Promise<{ selected_path: string | null }> {
+    return request(`/workspace/browse`, {
+      method: 'POST',
+      body: JSON.stringify({ initial_dir: initialDir || '' }),
+    });
+  },
 };

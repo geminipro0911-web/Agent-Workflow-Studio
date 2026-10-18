@@ -83,34 +83,31 @@ export const Header: React.FC<HeaderProps> = ({
   }, [targetProjectPath]);
 
   const handleBrowseDirectory = async () => {
+    // 1. Try Backend Native OS Folder Picker (Bypasses all browser security sandboxes)
     try {
-      if ('showDirectoryPicker' in window) {
-        const dirHandle = await (window as any).showDirectoryPicker();
-        if (dirHandle?.name) {
-          const current = targetProjectPath.trim();
-          if (current.includes('\\') || current.includes('/')) {
-            const sep = current.includes('\\') ? '\\' : '/';
-            const parts = current.split(/[\\/]/).filter(Boolean);
-            parts.pop();
-            const parent = parts.join(sep);
-            onTargetProjectPathChange(parent ? `${parent}${sep}${dirHandle.name}` : dirHandle.name);
-          } else {
-            onTargetProjectPathChange(dirHandle.name);
-          }
-        }
-      } else {
-        const manual = prompt('Nhập đường dẫn thư mục dự án (ví dụ: D:\\Project\\ecommerce-web):', targetProjectPath);
-        if (manual !== null) {
-          onTargetProjectPathChange(manual.trim());
-        }
+      const res = await api.browseWorkspace(targetProjectPath);
+      if (res?.selected_path) {
+        const cleaned = res.selected_path.trim().replace(/^["']|["']$/g, '').trim();
+        onTargetProjectPathChange(cleaned);
+        return;
       }
-    } catch (err: any) {
-      if (err.name !== 'AbortError') {
-        const manual = prompt('Nhập đường dẫn thư mục dự án (ví dụ: D:\\Project\\ecommerce-web):', targetProjectPath);
-        if (manual !== null) {
-          onTargetProjectPathChange(manual.trim());
-        }
+      if (res?.selected_path === null) {
+        // User explicitly closed/cancelled dialog, do not open prompt
+        return;
       }
+    } catch (backendErr) {
+      console.warn('Backend native browse dialog failed or unavailable:', backendErr);
+    }
+
+    // 2. Fallback: Prompt user for full path
+    const manual = prompt(
+      language === 'vi'
+        ? 'Nhập đường dẫn tuyệt đối đến thư mục dự án (ví dụ: D:\\Project\\ecommerce-web):'
+        : 'Enter absolute path to target project directory (e.g. D:\\Project\\ecommerce-web):',
+      targetProjectPath || 'D:\\Project\\'
+    );
+    if (manual !== null && manual.trim()) {
+      onTargetProjectPathChange(manual.trim().replace(/^["']|["']$/g, '').trim());
     }
   };
 
@@ -285,8 +282,12 @@ export const Header: React.FC<HeaderProps> = ({
           <FolderGit2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
           <input
             type="text"
+            data-testid="target-project-path-input"
             value={targetProjectPath}
-            onChange={(e) => onTargetProjectPathChange(e.target.value)}
+            onChange={(e) => {
+              const val = e.target.value.replace(/^["']|["']$/g, '');
+              onTargetProjectPathChange(val);
+            }}
             placeholder={t('target_project_path_placeholder')}
             className="w-full text-xs bg-transparent text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-600 focus:outline-none font-mono"
             title={t('folder_helper_tooltip')}
@@ -303,6 +304,7 @@ export const Header: React.FC<HeaderProps> = ({
           )}
           <button
             type="button"
+            data-testid="browse-directory-btn"
             onClick={handleBrowseDirectory}
             className="px-2 py-0.5 rounded-lg text-[10px] font-semibold bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700 shrink-0 transition"
             title="Browse folder via OS dialog"

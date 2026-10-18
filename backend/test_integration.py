@@ -299,3 +299,44 @@ class TestDAGOrchestratorIntegration:
         # 3. Node D started only after both Node B and Node C completed
         assert end_times[f"{wf_id}_node_b"] <= start_times[f"{wf_id}_node_d"]
         assert end_times[f"{wf_id}_node_c"] <= start_times[f"{wf_id}_node_d"]
+
+    def test_workspace_path_quote_cleaning_and_browse_api(self, tmp_path: Path):
+        """Verify that paths with double/single quotes, trailing slashes and browse API work seamlessly."""
+        from fastapi.testclient import TestClient
+        from main import app
+        auditor = GitScopeAuditor()
+        project_dir = str(tmp_path)
+
+        subprocess.run(["git", "init"], cwd=project_dir, capture_output=True, check=True)
+        subprocess.run(["git", "config", "user.name", "Test"], cwd=project_dir, capture_output=True, check=True)
+        subprocess.run(["git", "config", "user.email", "test@test.com"], cwd=project_dir, capture_output=True, check=True)
+        (tmp_path / "README.md").write_text("Init\n", encoding="utf-8")
+        subprocess.run(["git", "add", "."], cwd=project_dir, capture_output=True, check=True)
+        subprocess.run(["git", "commit", "-m", "Init"], cwd=project_dir, capture_output=True, check=True)
+
+        # 1. Quoted path test
+        quoted_dir = f'"{project_dir}"'
+        is_ok, err = auditor.validate_git_repository(quoted_dir)
+        assert is_ok is True
+        assert err is None
+
+        # 2. Single-quoted with trailing slash
+        single_quoted = f"'{project_dir}/'"
+        is_ok_sq, err_sq = auditor.validate_git_repository(single_quoted)
+        assert is_ok_sq is True
+
+        # 3. API endpoint with quotes
+        client = TestClient(app)
+        res = client.post("/api/v1/workspace/validate", json={"workspace_dir": quoted_dir})
+        assert res.status_code == 200
+        data = res.json()
+        assert data["success"] is True
+        assert data["data"]["is_valid"] is True
+        assert data["data"]["error_message"] is None
+
+        # 4. API browse endpoint returns valid schema
+        browse_res = client.post("/api/v1/workspace/browse", json={"initial_dir": project_dir, "headless": True})
+        assert browse_res.status_code == 200
+        assert browse_res.json()["success"] is True
+        assert browse_res.json()["data"]["selected_path"] == project_dir
+

@@ -8,6 +8,9 @@ Git Diff scope violation auditing, and real-time streaming.
 from __future__ import annotations
 
 import json
+import os
+import subprocess
+import sys
 import uuid
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -125,6 +128,11 @@ class RejectNodeDTO(BaseModel):
 
 class WorkspaceValidateDTO(BaseModel):
     workspace_dir: str
+
+
+class WorkspaceBrowseDTO(BaseModel):
+    initial_dir: Optional[str] = None
+    headless: bool = False
 
 
 # ============================================================================
@@ -605,6 +613,8 @@ async def execute_workflow(workflow_id: str, payload: ExecuteWorkflowDTO):
 
     # Validate target_project_dir has .git and initial commit
     workspace_dir = (payload.environment_vars or {}).get("WORKSPACE_DIR")
+    if workspace_dir:
+        workspace_dir = str(workspace_dir).strip().strip('"').strip("'").strip()
     if not workspace_dir:
         workspace_dir = str(Path(__file__).resolve().parent.parent)
 
@@ -666,13 +676,90 @@ async def execute_workflow(workflow_id: str, payload: ExecuteWorkflowDTO):
 @app.post("/api/v1/workspace/validate", tags=["Workspace"])
 def validate_workspace(payload: WorkspaceValidateDTO):
     """Validate whether target directory exists, has git initialized, and has an initial commit."""
-    is_valid, err_msg = orchestrator.auditor.validate_git_repository(payload.workspace_dir)
+    cleaned = (payload.workspace_dir or "").strip().strip('"').strip("'").strip()
+    is_valid, err_msg = orchestrator.auditor.validate_git_repository(cleaned)
     return {
         "success": True,
         "data": {
-            "workspace_dir": payload.workspace_dir,
+            "workspace_dir": cleaned,
             "is_valid": is_valid,
             "error_message": err_msg,
+        }
+    }
+
+
+@app.post("/api/v1/workspace/browse", tags=["Workspace"])
+def browse_workspace(payload: Optional[WorkspaceBrowseDTO] = None):
+    """Open a native OS folder dialog on the host system to pick a project directory without browser sandbox limits."""
+    import sys
+    import subprocess
+
+    initial_dir = payload.initial_dir if payload else None
+    cleaned_initial = (initial_dir or "").strip().strip('"').strip("'").strip()
+    if not os.path.exists(cleaned_initial):
+        cleaned_initial = os.getcwd()
+
+    if payload and payload.headless:
+        return {
+            "success": True,
+            "data": {
+                "selected_path": cleaned_initial
+            }
+        }
+
+    selected_path = None
+
+    # Windows native folder picker via PowerShell System.Windows.Forms.FolderBrowserDialog
+    if sys.platform == "win32":
+        try:
+            ps_script = f"""
+[System.Reflection.Assembly]::LoadWithPartialName('System.Windows.Forms') | Out-Null
+$dialog = New-Object System.Windows.Forms.FolderBrowserDialog
+$dialog.Description = 'Chọn thư mục dự án cho Gemini Workflow Studio'
+$dialog.ShowNewFolderButton = $true
+$dialog.SelectedPath = '{cleaned_initial.replace("'", "''")}'
+$result = $dialog.ShowDialog()
+if ($result -eq [System.Windows.Forms.DialogResult]::OK) {{
+    [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+    Write-Output $dialog.SelectedPath
+}}
+"""
+            proc = subprocess.run(
+                ["powershell", "-NoProfile", "-NonInteractive", "-Command", ps_script],
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                timeout=60,
+                check=False
+            )
+            out = proc.stdout.strip()
+            if out and os.path.exists(out):
+                selected_path = out
+        except Exception as e:
+            logger.warning(f"PowerShell FolderBrowserDialog failed: {e}")
+
+    # Fallback to tkinter if on Linux/Mac or if PowerShell fails
+    if not selected_path:
+        try:
+            import tkinter as tk
+            from tkinter import filedialog
+            root = tk.Tk()
+            root.withdraw()
+            root.wm_attributes('-topmost', 1)
+            folder = filedialog.askdirectory(
+                title="Chọn thư mục dự án cho Gemini Workflow Studio",
+                initialdir=cleaned_initial
+            )
+            root.destroy()
+            if folder and os.path.exists(folder):
+                selected_path = os.path.abspath(folder)
+        except Exception as e:
+            logger.warning(f"Tkinter filedialog failed: {e}")
+
+    return {
+        "success": True,
+        "data": {
+            "selected_path": selected_path
         }
     }
 
